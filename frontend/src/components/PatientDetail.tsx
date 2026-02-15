@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import Modal from './Modal';
 import { api } from '../api';
@@ -70,6 +70,18 @@ const HistoryIcon = () => (
     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" />
   </svg>
 );
+const SpeakerIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+  </svg>
+);
+const StopCircleIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" /><rect width="6" height="6" x="9" y="9" />
+  </svg>
+);
 
 export default function PatientDetail({
   patient, serviceName, serviceColor, canEdit, isDoctor, userName,
@@ -82,6 +94,11 @@ export default function PatientDetail({
   const [additionalNotesDraft, setAdditionalNotesDraft] = useState(patient.additionalNotes || '');
   const [savingAdditionalNotes, setSavingAdditionalNotes] = useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
+
+  // TTS state
+  const [ttsState, setTtsState] = useState<'idle' | 'loading' | 'playing'>('idle');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
 
   const color = serviceColor || 'hsl(var(--muted-foreground))';
 
@@ -140,6 +157,90 @@ export default function PatientDetail({
       alert(e.message);
     } finally {
       setAddingNote(false);
+    }
+  };
+
+  // Build natural-language text for TTS — reads everything shown in the care profile
+  const buildTtsText = () => {
+    const parts: string[] = [];
+
+    parts.push(`Care profile for ${patient.fullName}.`);
+    parts.push(`Room ${patient.roomNumber}, ${serviceName || 'unknown service'}.`);
+
+    // Comfort & Environment
+    parts.push(`Comfort and environment.`);
+    parts.push(`Temperature preference: ${patient.tempPreference || 'Not specified'}.`);
+    parts.push(`Noise level: ${patient.noisePreference || 'Not specified'}.`);
+    if (patient.sleepSchedule) {
+      parts.push(`Sleep schedule: ${patient.sleepSchedule}.`);
+    }
+
+    // Diet
+    parts.push(`Diet and preferences: ${patient.dietary || 'No dietary restrictions'}.`);
+
+    // Avoid
+    parts.push(`Things to avoid: ${patient.dislikes || 'Nothing specific noted'}.`);
+    if (patient.beliefs) {
+      parts.push(`Beliefs to be aware of: ${patient.beliefs}.`);
+    }
+
+    // Interaction
+    parts.push(`Communication style: ${patient.communicationStyle || 'Not specified'}.`);
+
+    // Practical tips
+    if (patient.visitation) {
+      parts.push(`Visitation preferences: ${patient.visitation}.`);
+    }
+    if (patient.hobbies) {
+      parts.push(`Hobbies and interests: ${patient.hobbies}.`);
+    }
+
+    // Additional notes
+    if (patient.additionalNotes) {
+      parts.push(`Additional notes: ${patient.additionalNotes}.`);
+    }
+
+    parts.push(`End of care profile.`);
+
+    return parts.join(' ');
+  };
+
+  const handleTtsPlay = async () => {
+    if (ttsState === 'playing') {
+      // Stop
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      setTtsState('idle');
+      return;
+    }
+
+    setTtsState('loading');
+    try {
+      const text = buildTtsText();
+      const blob = await api.tts.speak(text);
+
+      // Revoke previous URL if any
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+
+      const url = URL.createObjectURL(blob);
+      audioUrlRef.current = url;
+
+      const audio = new Audio(url);
+      audioRef.current = audio;
+
+      audio.onended = () => setTtsState('idle');
+      audio.onerror = () => {
+        setTtsState('idle');
+        alert('Audio playback failed.');
+      };
+
+      await audio.play();
+      setTtsState('playing');
+    } catch (e: any) {
+      setTtsState('idle');
+      alert(e.message || 'Text-to-speech failed.');
     }
   };
 
@@ -242,13 +343,43 @@ export default function PatientDetail({
         {/* Care Profile */}
         {hasProfile ? (
           <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                </svg>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                  </svg>
+                </div>
+                <h4 className="font-semibold text-card-foreground">Care Profile</h4>
               </div>
-              <h4 className="font-semibold text-card-foreground">Care Profile</h4>
+              {/* TTS Read Aloud button */}
+              <button
+                type="button"
+                onClick={handleTtsPlay}
+                disabled={ttsState === 'loading'}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 active:scale-[0.97] ${
+                  ttsState === 'playing'
+                    ? 'bg-destructive/10 text-destructive hover:bg-destructive/20 ring-1 ring-destructive/20'
+                    : ttsState === 'loading'
+                      ? 'bg-primary/10 text-primary animate-pulse cursor-wait'
+                      : 'bg-primary/10 text-primary hover:bg-primary/20 ring-1 ring-primary/15'
+                }`}
+                title={ttsState === 'playing' ? 'Stop reading' : 'Read care profile aloud'}
+              >
+                {ttsState === 'playing' ? (
+                  <><StopCircleIcon /> Stop</>
+                ) : ttsState === 'loading' ? (
+                  <>
+                    <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Loading...
+                  </>
+                ) : (
+                  <><SpeakerIcon /> Read aloud</>
+                )}
+              </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {profileSections.map((section) => (

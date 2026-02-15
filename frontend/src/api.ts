@@ -59,4 +59,18 @@ export const api = {
     summary: (patient: Record<string, unknown>) =>
       request('/ai/summary', { method: 'POST', body: JSON.stringify({ patient }) }),
   },
+  tts: {
+    speak: async (text: string): Promise<Blob> => {
+      const res = await fetch(`${BASE}/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any).error || res.statusText);
+      }
+      return res.blob();
+    },
+  },
 };

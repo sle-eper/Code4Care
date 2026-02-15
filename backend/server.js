@@ -14,6 +14,7 @@ import { servicesRoutes } from './routes/services.js';
 import { staffRoutes } from './routes/staff.js';
 import { patientsRoutes } from './routes/patients.js';
 import { aiRoutes } from './routes/ai.js';
+import { ttsRoutes } from './routes/tts.js';
 
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
@@ -27,6 +28,7 @@ app.use('/api/services', servicesRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/patients', patientsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/tts', ttsRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
