@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patient Preference & Priority Engine | Code4Care</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .gradient-header { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%); }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); }
+    .btn-disabled:disabled { opacity: 0.6; cursor: not-allowed; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin-slow { animation: spin 0.8s linear infinite; }
+    .modal-backdrop { background: rgba(0,0,0,0.5); }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <!-- Login Screen -->
+  <div id="loginScreen" class="min-h-screen gradient-header flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+      <h1 class="text-2xl font-bold text-slate-800 text-center mb-2">Patient Preference & Priority Engine</h1>
+      <p class="text-slate-500 text-center text-sm mb-6">Code4Care · Healthcare Hackathon</p>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
+          <input type="text" id="loginUsername" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="admin / nurse1 / doctor1" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+          <input type="password" id="loginPassword" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="••••••••" />
+        </div>
+        <p id="loginError" class="text-red-500 text-sm hidden"></p>
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">Sign In</button>
+      </form>
+      <p class="text-xs text-slate-400 text-center mt-4">Demo: admin/admin123 · nurse1/nurse123 · doctor1/doctor123</p>
+    </div>
+  </div>
+
+  <!-- App Container (hidden until logged in) -->
+  <div id="appContainer" class="hidden">
+    <!-- Header -->
+    <header class="gradient-header text-white shadow-lg">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xl font-bold">Code4Care</span>
+          <span id="userBadge" class="px-2 py-0.5 rounded text-xs font-medium bg-white/20"></span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="headerService" class="text-sm opacity-90"></span>
+          <button id="apiKeyBtn" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition" title="Set Claude API key for AI summaries">API Key</button>
+          <button id="logoutBtn" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6">
+      <!-- Admin Dashboard -->
+      <div id="adminDashboard" class="hidden space-y-6">
+        <h2 class="text-2xl font-bold text-slate-800">Admin Dashboard</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl shadow p-4 border border-slate-100">
+            <p class="text-slate-500 text-sm">Total Patients</p>
+            <p id="statTotalPatients" class="text-2xl font-bold text-indigo-600">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4 border border-slate-100">
+            <p class="text-slate-500 text-sm">Active Patients</p>
+            <p id="statActivePatients" class="text-2xl font-bold text-green-600">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4 border border-slate-100">
+            <p class="text-slate-500 text-sm">Staff</p>
+            <p id="statStaff" class="text-2xl font-bold text-blue-600">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4 border border-slate-100">
+            <p class="text-slate-500 text-sm">Services</p>
+            <p id="statServices" class="text-2xl font-bold text-purple-600">0</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white rounded-xl shadow border border-slate-100 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h3 class="font-semibold text-slate-800">Services</h3>
+              <button id="adminAddService" class="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">Add Service</button>
+            </div>
+            <ul id="adminServicesList" class="divide-y divide-slate-100 p-2 max-h-64 overflow-y-auto"></ul>
+          </div>
+          <div class="bg-white rounded-xl shadow border border-slate-100 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h3 class="font-semibold text-slate-800">Staff</h3>
+              <button id="adminAddStaff" class="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">Register Staff</button>
+            </div>
+            <ul id="adminStaffList" class="divide-y divide-slate-100 p-2 max-h-64 overflow-y-auto"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nurse Dashboard -->
+      <div id="nurseDashboard" class="hidden space-y-6">
+        <h2 class="text-2xl font-bold text-slate-800">Nurse Dashboard</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl shadow p-4 border border-slate-100 card-hover transition">
+            <p class="text-slate-500 text-sm">In My Service</p>
+            <p id="nurseStatService" class="text-2xl font-bold text-indigo-600">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4 border border-slate-100 card-hover transition">
+            <p class="text-slate-500 text-sm">Active</p>
+            <p id="nurseStatActive" class="text-2xl font-bold text-green-600">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4 border border-slate-100 card-hover transition">
+            <p class="text-slate-500 text-sm">Discharged</p>
+            <p id="nurseStatDischarged" class="text-2xl font-bold text-amber-600">0</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4 border border-slate-100 card-hover transition cursor-pointer" id="nurseArchivedCard">
+            <p class="text-slate-500 text-sm">Archived</p>
+            <p id="nurseStatArchived" class="text-2xl font-bold text-slate-600">0</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <button id="nurseRegisterPatient" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">Register New Patient</button>
+          <div class="flex gap-2">
+            <button id="nurseFilterAll" class="filter-btn px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-medium text-sm active">All</button>
+            <button id="nurseFilterActive" class="filter-btn px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-medium text-sm">Active</button>
+            <button id="nurseFilterDischarged" class="filter-btn px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-medium text-sm">Discharged</button>
+          </div>
+        </div>
+        <div id="nursePatientsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- Nurse Archived View -->
+      <div id="nurseArchivedView" class="hidden space-y-6">
+        <div class="flex items-center gap-2">
+          <button id="backFromArchived" class="px-3 py-1.5 border border-slate-300 rounded-lg hover:bg-slate-100">← Back</button>
+          <h2 class="text-2xl font-bold text-slate-800">Archived Patients</h2>
+        </div>
+        <input type="text" id="archivedSearch" placeholder="Search archived by name or ID..." class="w-full max-w-md px-4 py-2 border border-slate-300 rounded-lg" />
+        <div id="nurseArchivedGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- Doctor Dashboard -->
+      <div id="doctorDashboard" class="hidden space-y-6">
+        <h2 class="text-2xl font-bold text-slate-800">Doctor Dashboard</h2>
+        <div class="flex flex-wrap gap-2 items-center">
+          <input type="text" id="doctorSearch" placeholder="Search by name, medical ID, or room..." class="px-4 py-2 border border-slate-300 rounded-lg flex-1 min-w-[200px]" />
+          <select id="doctorServiceFilter" class="px-4 py-2 border border-slate-300 rounded-lg bg-white">
+            <option value="">All Services</option>
+          </select>
+        </div>
+        <div id="doctorPatientsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="modalOverlay" class="fixed inset-0 z-50 modal-backdrop hidden items-center justify-center p-4" style="display: none;">
+    <div id="modalContent" class="bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden w-full max-w-2xl"></div>
+  </div>
+
+  <script>
+    // ============ DATA LAYER ============
+    const STORAGE_KEYS = { patients: 'pppe_patients', archived: 'pppe_archived', services: 'pppe_services', staff: 'pppe_staff' };
+
+    function getPatients() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.patients);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+    function setPatients(arr) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.patients, JSON.stringify(arr));
+      } catch (e) { console.error(e); }
+    }
+
+    function getArchivedPatients() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.archived);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+    function setArchivedPatients(arr) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.archived, JSON.stringify(arr));
+      } catch (e) { console.error(e); }
+    }
+
+    function getServices() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.services);
+        if (raw) return JSON.parse(raw);
+        const defaults = [
+          { id: 1, name: 'Chirurgie', color: '#7c3aed' },
+          { id: 2, name: 'Réanimation', color: '#dc2626' },
+          { id: 3, name: 'Pédiatrie', color: '#db2777' },
+          { id: 4, name: 'Médecine Interne', color: '#2563eb' },
+          { id: 5, name: 'Cardiologie', color: '#16a34a' },
+          { id: 6, name: 'Psychiatrie', color: '#4f46e5' }
+        ];
+        localStorage.setItem(STORAGE_KEYS.services, JSON.stringify(defaults));
+        return defaults;
+      } catch (e) { return []; }
+    }
+    function setServices(arr) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.services, JSON.stringify(arr));
+      } catch (e) { console.error(e); }
+    }
+
+    function getStaff() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.staff);
+        if (raw) return JSON.parse(raw);
+        const defaults = [
+          { id: 1, username: 'admin', password: 'admin123', role: 'admin', name: 'Admin', serviceId: null },
+          { id: 2, username: 'nurse1', password: 'nurse123', role: 'nurse', name: 'Nurse One', serviceId: 1 },
+          { id: 3, username: 'doctor1', password: 'doctor123', role: 'doctor', name: 'Dr. One', serviceId: 1 }
+        ];
+        localStorage.setItem(STORAGE_KEYS.staff, JSON.stringify(defaults));
+        return defaults;
+      } catch (e) { return []; }
+    }
+    function setStaff(arr) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.staff, JSON.stringify(arr));
+      } catch (e) { console.error(e); }
+    }
+
+    function getNextId(arr) {
+      if (!arr.length) return 1;
+      return Math.max(...arr.map(x => x.id)) + 1;
+    }
+
+    function addAuditEntry(patient, action, by, details = '') {
+      patient.auditTrail = patient.auditTrail || [];
+      patient.auditTrail.unshift({
+        at: new Date().toISOString(),
+        by,
+        action,
+        details
+      });
+    }
+
+    // ============ AUTH ============
+    let currentUser = null;
+
+    function initAuth() {
+      getStaff();
+      getServices();
+    }
+
+    function login(username, password) {
+      const staff = getStaff();
+      const user = staff.find(s => s.username === username && s.password === password);
+      if (!user) return false;
+      currentUser = user;
+      return true;
+    }
+
+    function showApp() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('appContainer').classList.remove('hidden');
+      document.getElementById('userBadge').textContent = `${currentUser.name} (${currentUser.role})`;
+      const svc = getServices().find(s => s.id === currentUser.serviceId);
+      document.getElementById('headerService').textContent = svc ? svc.name : (currentUser.role === 'admin' ? 'All services' : '');
+      showDashboard();
+    }
+
+    function showDashboard() {
+      document.getElementById('adminDashboard').classList.add('hidden');
+      document.getElementById('nurseDashboard').classList.add('hidden');
+      document.getElementById('nurseArchivedView').classList.add('hidden');
+      document.getElementById('doctorDashboard').classList.add('hidden');
+      if (currentUser.role === 'admin') {
+        document.getElementById('adminDashboard').classList.remove('hidden');
+        renderAdminDashboard();
+      } else if (currentUser.role === 'nurse') {
+        document.getElementById('nurseDashboard').classList.remove('hidden');
+        renderNurseDashboard();
+      } else if (currentUser.role === 'doctor') {
+        document.getElementById('doctorDashboard').classList.remove('hidden');
+        renderDoctorDashboard();
+      }
+    }
+
+    // ============ MODAL ============
+    function openModal(html) {
+      const overlay = document.getElementById('modalOverlay');
+      const content = document.getElementById('modalContent');
+      content.innerHTML = html;
+      overlay.classList.remove('hidden');
+      overlay.style.display = 'flex';
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modalOverlay');
+      overlay.classList.add('hidden');
+      overlay.style.display = 'none';
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // ============ ADMIN ============
+    function renderAdminDashboard() {
+      const patients = getPatients();
+      const archived = getArchivedPatients();
+      const active = patients.filter(p => p.status === 'Active');
+      document.getElementById('statTotalPatients').textContent = patients.length + archived.length;
+      document.getElementById('statActivePatients').textContent = active.length;
+      document.getElementById('statStaff').textContent = getStaff().length;
+      document.getElementById('statServices').textContent = getServices().length;
+
+      const services = getServices();
+      const ul = document.getElementById('adminServicesList');
+      ul.innerHTML = services.map(s => `
+        <li class="flex items-center justify-between px-3 py-2 hover:bg-slate-50 rounded-lg">
+          <span class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full" style="background:${s.color}"></span>
+            ${s.name}
+          </span>
+          <button class="text-red-500 text-sm hover:underline" data-service-id="${s.id}">Remove</button>
+        </li>
+      `).join('');
+      ul.querySelectorAll('[data-service-id]').forEach(btn => {
+        btn.addEventListener('click', () => removeService(parseInt(btn.dataset.serviceId, 10)));
+      });
+
+      const staff = getStaff();
+      const staffUl = document.getElementById('adminStaffList');
+      const serviceNames = Object.fromEntries(services.map(s => [s.id, s.name]));
+      staffUl.innerHTML = staff.map(s => `
+        <li class="flex items-center justify-between px-3 py-2 hover:bg-slate-50 rounded-lg">
+          <span>${s.name} (${s.role}) ${s.serviceId ? ' · ' + (serviceNames[s.serviceId] || '') : ''}</span>
+          ${s.role === 'admin' ? '' : `<button class="text-red-500 text-sm hover:underline" data-staff-id="${s.id}">Remove</button>`}
+        </li>
+      `).join('');
+      staffUl.querySelectorAll('[data-staff-id]').forEach(btn => {
+        btn.addEventListener('click', () => removeStaff(parseInt(btn.dataset.staffId, 10)));
+      });
+    }
+
+    function removeService(id) {
+      const services = getServices().filter(s => s.id !== id);
+      setServices(services);
+      renderAdminDashboard();
+    }
+
+    function removeStaff(id) {
+      const staff = getStaff().filter(s => s.id !== id);
+      setStaff(staff);
+      renderAdminDashboard();
+    }
+
+    document.getElementById('adminAddService').addEventListener('click', () => {
+      const services = getServices();
+      const colors = ['#7c3aed', '#dc2626', '#db2777', '#2563eb', '#16a34a', '#4f46e5', '#0d9488', '#ca8a04'];
+      openModal(`
+        <div class="p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Add Service</h3>
+          <form id="serviceForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+              <input type="text" id="serviceName" required class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g. Neurologie" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Color</label>
+              <input type="color" id="serviceColor" value="${colors[services.length % colors.length]}" class="h-10 w-full rounded border border-slate-300" />
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+              <button type="button" class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50" onclick="closeModal()">Cancel</button>
+              <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+            </div>
+          </form>
+        </div>
+      `);
+      document.getElementById('serviceForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('serviceName').value.trim();
+        const color = document.getElementById('serviceColor').value;
+        const list = getServices();
+        list.push({ id: getNextId(list), name, color });
+        setServices(list);
+        closeModal();
+        renderAdminDashboard();
+      });
+    });
+
+    document.getElementById('adminAddStaff').addEventListener('click', () => {
+      const services = getServices();
+      openModal(`
+        <div class="p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Register Staff</h3>
+          <form id="staffForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+              <input type="text" id="staffName" required class="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
+              <input type="text" id="staffUsername" required class="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <input type="password" id="staffPassword" required class="w-full px-4 py-2 border border-slate-300 rounded-lg" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Role</label>
+              <select id="staffRole" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                <option value="nurse">Nurse</option>
+                <option value="doctor">Doctor</option>
+              </select>
+            </div>
+            <div id="staffServiceWrap">
+              <label class="block text-sm font-medium text-slate-700 mb-1">Service</label>
+              <select id="staffServiceId" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                ${services.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+              </select>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+              <button type="button" class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50" onclick="closeModal()">Cancel</button>
+              <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+            </div>
+          </form>
+        </div>
+      `);
+      document.getElementById('staffForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('staffName').value.trim();
+        const username = document.getElementById('staffUsername').value.trim();
+        const password = document.getElementById('staffPassword').value;
+        const role = document.getElementById('staffRole').value;
+        const serviceId = role === 'admin' ? null : parseInt(document.getElementById('staffServiceId').value, 10);
+        const list = getStaff();
+        if (list.some(s => s.username === username)) {
+          alert('Username already exists.');
+          return;
+        }
+        list.push({ id: getNextId(list), username, password, role, name, serviceId });
+        setStaff(list);
+        closeModal();
+        renderAdminDashboard();
+      });
+    });
+
+    // ============ NURSE ============
+    let nurseFilter = 'All';
+
+    function getNursePatients() {
+      const patients = getPatients();
+      return patients.filter(p => p.serviceId === currentUser.serviceId);
+    }
+
+    function renderNurseDashboard() {
+      const list = getNursePatients();
+      const active = list.filter(p => p.status === 'Active');
+      const discharged = list.filter(p => p.status === 'Discharged');
+      const archived = getArchivedPatients().filter(a => a.serviceId === currentUser.serviceId);
+
+      document.getElementById('nurseStatService').textContent = list.length;
+      document.getElementById('nurseStatActive').textContent = active.length;
+      document.getElementById('nurseStatDischarged').textContent = discharged.length;
+      document.getElementById('nurseStatArchived').textContent = archived.length;
+
+      let filtered = list;
+      if (nurseFilter === 'Active') filtered = active;
+      else if (nurseFilter === 'Discharged') filtered = discharged;
+
+      document.querySelectorAll('#nurseDashboard .filter-btn').forEach((btn, i) => {
+        const labels = ['All', 'Active', 'Discharged'];
+        btn.classList.toggle('bg-indigo-100', btn.textContent.trim() === nurseFilter);
+        btn.classList.toggle('border-indigo-500', btn.textContent.trim() === nurseFilter);
+      });
+
+      const grid = document.getElementById('nursePatientsGrid');
+      grid.innerHTML = filtered.map(p => renderPatientCard(p, true)).join('');
+      grid.querySelectorAll('[data-patient-id]').forEach(el => {
+        const id = parseInt(el.dataset.patientId, 10);
+        el.addEventListener('click', () => openPatientDetail(id, true));
+      });
+    }
+
+    document.getElementById('nurseFilterAll').addEventListener('click', () => { nurseFilter = 'All'; renderNurseDashboard(); });
+    document.getElementById('nurseFilterActive').addEventListener('click', () => { nurseFilter = 'Active'; renderNurseDashboard(); });
+    document.getElementById('nurseFilterDischarged').addEventListener('click', () => { nurseFilter = 'Discharged'; renderNurseDashboard(); });
+
+    document.getElementById('nurseArchivedCard').addEventListener('click', () => {
+      document.getElementById('nurseDashboard').classList.add('hidden');
+      document.getElementById('nurseArchivedView').classList.remove('hidden');
+      renderArchivedList();
+    });
+
+    document.getElementById('backFromArchived').addEventListener('click', () => {
+      document.getElementById('nurseArchivedView').classList.add('hidden');
+      document.getElementById('nurseDashboard').classList.remove('hidden');
+      renderNurseDashboard();
+    });
+
+    document.getElementById('archivedSearch').addEventListener('input', () => renderArchivedList());
+
+    function renderArchivedList() {
+      const archived = getArchivedPatients().filter(a => a.serviceId === currentUser.serviceId);
+      const q = document.getElementById('archivedSearch').value.trim().toLowerCase();
+      const filtered = q ? archived.filter(a =>
+        (a.fullName && a.fullName.toLowerCase().includes(q)) ||
+        (a.medicalId && a.medicalId.toLowerCase().includes(q))
+      ) : archived;
+      const grid = document.getElementById('nurseArchivedGrid');
+      grid.innerHTML = filtered.map(a => `
+        <div class="bg-white rounded-xl shadow border border-slate-100 p-4 card-hover transition cursor-pointer" data-archived-id="${a.id}">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="font-semibold text-slate-800">${escapeHtml(a.fullName || 'Unknown')}</p>
+              <p class="text-sm text-slate-500">${escapeHtml(a.medicalId || '')} · ${getServiceName(a.serviceId)}</p>
+              ${a.archivedAt ? `<p class="text-xs text-slate-400 mt-1">Archived ${new Date(a.archivedAt).toLocaleDateString()}</p>` : ''}
+            </div>
+            <button class="restore-archived px-2 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700" data-archived-id="${a.id}">Restore</button>
+          </div>
+        </div>
+      `).join('');
+      grid.querySelectorAll('.restore-archived').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.stopPropagation(); openRestoreModal(parseInt(btn.dataset.archivedId, 10)); });
+      });
+    }
+
+    function openRestoreModal(archivedId) {
+      const archived = getArchivedPatients();
+      const patient = archived.find(p => p.id === archivedId);
+      if (!patient) return;
+      const visits = (patient.visitHistory || []).slice().reverse();
+      const services = getServices();
+      openModal(`
+        <div class="p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-2">Restore Patient</h3>
+          <p class="text-slate-600 mb-4">${escapeHtml(patient.fullName)} — Previous visits:</p>
+          <ul class="mb-4 max-h-32 overflow-y-auto text-sm text-slate-600">
+            ${visits.map(v => `<li>${v.admittedAt ? new Date(v.admittedAt).toLocaleDateString() : '?'} — Room ${v.roomNumber || '?'}, ${getServiceName(v.serviceId)}</li>`).join('')}
+          </ul>
+          <form id="restoreForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">New Room Number</label>
+              <input type="text" id="restoreRoom" required class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g. 101" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Service</label>
+              <select id="restoreServiceId" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                ${services.map(s => `<option value="${s.id}" ${s.id === currentUser.serviceId ? 'selected' : ''}>${s.name}</option>`).join('')}
+              </select>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+              <button type="button" class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50" onclick="closeModal()">Cancel</button>
+              <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Restore Patient</button>
+            </div>
+          </form>
+        </div>
+      `);
+      document.getElementById('restoreForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const roomNumber = document.getElementById('restoreRoom').value.trim();
+        const serviceId = parseInt(document.getElementById('restoreServiceId').value, 10);
+        const archivedList = getArchivedPatients();
+        const idx = archivedList.findIndex(p => p.id === archivedId);
+        if (idx === -1) return;
+        const restored = archivedList[idx];
+        restored.visitHistory = restored.visitHistory || [];
+        restored.visitHistory.push({
+          admittedAt: new Date().toISOString(),
+          roomNumber,
+          serviceId,
+          restoredBy: currentUser.name
+        });
+        restored.roomNumber = roomNumber;
+        restored.serviceId = serviceId;
+        restored.status = 'Active';
+        restored.archivedAt = null;
+        const patients = getPatients();
+        patients.push(restored);
+        setPatients(patients);
+        archivedList.splice(idx, 1);
+        setArchivedPatients(archivedList);
+        addAuditEntry(restored, 'Restored from archive', currentUser.name, `Room ${roomNumber}, ${getServiceName(serviceId)}`);
+        closeModal();
+        document.getElementById('nurseArchivedView').classList.add('hidden');
+        document.getElementById('nurseDashboard').classList.remove('hidden');
+        renderNurseDashboard();
+      });
+    }
+
+    // ============ PATIENT FORM (full questionnaire) ============
+    function getServiceName(id) {
+      return getServices().find(s => s.id === id)?.name || '';
+    }
+
+    function openPatientForm(editId = null) {
+      const patient = editId ? getPatients().find(p => p.id === editId) : null;
+      const services = getServices();
+      const isEdit = !!patient;
+      openModal(`
+        <div class="p-6 max-h-[90vh] overflow-y-auto">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">${isEdit ? 'Edit Patient' : 'Register New Patient'}</h3>
+          <form id="patientForm" class="space-y-4">
+            <div class="border-b border-slate-200 pb-3">
+              <h4 class="font-medium text-slate-700 mb-2">Basic Information</h4>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="col-span-2">
+                  <label class="block text-sm text-slate-600 mb-1">Full Name *</label>
+                  <input type="text" id="pFullName" required class="w-full px-3 py-2 border border-slate-300 rounded-lg" value="${patient ? escapeHtml(patient.fullName) : ''}" />
+                </div>
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1">Age *</label>
+                  <input type="number" id="pAge" required min="1" class="w-full px-3 py-2 border border-slate-300 rounded-lg" value="${patient ? patient.age : ''}" />
+                </div>
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1">Gender</label>
+                  <select id="pGender" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+                    <option value="Male" ${patient?.gender === 'Male' ? 'selected' : ''}>Male</option>
+                    <option value="Female" ${patient?.gender === 'Female' ? 'selected' : ''}>Female</option>
+                    <option value="Other" ${patient?.gender === 'Other' ? 'selected' : ''}>Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1">Medical ID</label>
+                  <input type="text" id="pMedicalId" class="w-full px-3 py-2 border border-slate-300 rounded-lg" value="${patient ? escapeHtml(patient.medicalId || '') : ''}" />
+                </div>
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1">Room Number *</label>
+                  <input type="text" id="pRoomNumber" required class="w-full px-3 py-2 border border-slate-300 rounded-lg" value="${patient ? escapeHtml(patient.roomNumber || '') : ''}" />
+                </div>
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1">Status</label>
+                  <select id="pStatus" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+                    <option value="Active" ${patient?.status !== 'Discharged' ? 'selected' : ''}>Active</option>
+                    <option value="Discharged" ${patient?.status === 'Discharged' ? 'selected' : ''}>Discharged</option>
+                  </select>
+                  <p id="dischargeWarning" class="text-amber-600 text-xs mt-1 hidden">Patient will be archived when saved.</p>
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm text-slate-600 mb-1">Service</label>
+                  <select id="pServiceId" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+                    ${services.map(s => `<option value="${s.id}" ${(patient?.serviceId || currentUser.serviceId) === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="border-b border-slate-200 pb-3">
+              <h4 class="font-medium text-slate-700 mb-2">Preferences</h4>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1">Room temperature</label>
+                  <select id="pTemp" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+                    <option value="Cool" ${patient?.tempPreference === 'Cool' ? 'selected' : ''}>Cool</option>
+                    <option value="Moderate" ${patient?.tempPreference === 'Moderate' || !patient ? 'selected' : ''}>Moderate</option>
+                    <option value="Warm" ${patient?.tempPreference === 'Warm' ? 'selected' : ''}>Warm</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1">Noise level</label>
+                  <select id="pNoise" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+                    <option value="Quiet" ${patient?.noisePreference === 'Quiet' ? 'selected' : ''}>Quiet</option>
+                    <option value="Moderate" ${patient?.noisePreference === 'Moderate' || !patient ? 'selected' : ''}>Moderate</option>
+                    <option value="Active" ${patient?.noisePreference === 'Active' ? 'selected' : ''}>Active</option>
+                  </select>
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm text-slate-600 mb-1">Dietary preferences / allergies</label>
+                  <textarea id="pDietary" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg">${patient ? escapeHtml(patient.dietary || '') : ''}</textarea>
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm text-slate-600 mb-1">Sleep schedule</label>
+                  <input type="text" id="pSleep" class="w-full px-3 py-2 border border-slate-300 rounded-lg" value="${patient ? escapeHtml(patient.sleepSchedule || '') : ''}" placeholder="e.g. 22:00 - 06:00" />
+                </div>
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1">Communication style</label>
+                  <select id="pComm" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+                    <option value="Detailed" ${patient?.communicationStyle === 'Detailed' ? 'selected' : ''}>Detailed</option>
+                    <option value="Simple" ${patient?.communicationStyle === 'Simple' || !patient ? 'selected' : ''}>Simple</option>
+                    <option value="Visual" ${patient?.communicationStyle === 'Visual' ? 'selected' : ''}>Visual</option>
+                  </select>
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm text-slate-600 mb-1">Religious / Cultural beliefs</label>
+                  <textarea id="pBeliefs" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg">${patient ? escapeHtml(patient.beliefs || '') : ''}</textarea>
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm text-slate-600 mb-1">Hobbies & interests</label>
+                  <textarea id="pHobbies" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg">${patient ? escapeHtml(patient.hobbies || '') : ''}</textarea>
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm text-slate-600 mb-1">Dislikes & triggers</label>
+                  <textarea id="pDislikes" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg">${patient ? escapeHtml(patient.dislikes || '') : ''}</textarea>
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm text-slate-600 mb-1">Family visitation preferences</label>
+                  <textarea id="pVisitation" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg">${patient ? escapeHtml(patient.visitation || '') : ''}</textarea>
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm text-slate-600 mb-1">Additional notes</label>
+                  <textarea id="pNotes" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg">${patient ? escapeHtml(patient.additionalNotes || '') : ''}</textarea>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-end gap-2">
+              <button type="button" class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50" onclick="closeModal()">Cancel</button>
+              <button type="submit" id="patientFormSubmit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 btn-disabled">${isEdit ? 'Save' : 'Save & Generate AI Profile'}</button>
+            </div>
+          </form>
+        </div>
+      `);
+      document.getElementById('pStatus').addEventListener('change', function() {
+        const w = document.getElementById('dischargeWarning');
+        if (w) w.classList.toggle('hidden', this.value !== 'Discharged');
+      });
+      if (document.getElementById('pStatus').value === 'Discharged') document.getElementById('dischargeWarning').classList.remove('hidden');
+      document.getElementById('patientForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('patientFormSubmit');
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+        let isSaving = true;
+        try {
+          const data = {
+            fullName: document.getElementById('pFullName').value.trim(),
+            age: parseInt(document.getElementById('pAge').value, 10),
+            gender: document.getElementById('pGender').value,
+            medicalId: document.getElementById('pMedicalId').value.trim(),
+            roomNumber: document.getElementById('pRoomNumber').value.trim(),
+            status: document.getElementById('pStatus').value,
+            serviceId: parseInt(document.getElementById('pServiceId').value, 10),
+            tempPreference: document.getElementById('pTemp').value,
+            noisePreference: document.getElementById('pNoise').value,
+            dietary: document.getElementById('pDietary').value.trim(),
+            sleepSchedule: document.getElementById('pSleep').value.trim(),
+            communicationStyle: document.getElementById('pComm').value,
+            beliefs: document.getElementById('pBeliefs').value.trim(),
+            hobbies: document.getElementById('pHobbies').value.trim(),
+            dislikes: document.getElementById('pDislikes').value.trim(),
+            visitation: document.getElementById('pVisitation').value.trim(),
+            additionalNotes: document.getElementById('pNotes').value.trim()
+          };
+          const patients = getPatients();
+          if (isEdit) {
+            const idx = patients.findIndex(p => p.id === editId);
+            if (idx === -1) return;
+            const existing = patients[idx];
+            const oldRoom = existing.roomNumber;
+            const oldService = existing.serviceId;
+            const oldStatus = existing.status;
+            Object.assign(existing, data);
+            existing.auditTrail = existing.auditTrail || [];
+            existing.auditTrail.unshift({ at: new Date().toISOString(), by: currentUser.name, action: 'Profile updated', details: '' });
+            if (oldRoom !== data.roomNumber) addAuditEntry(existing, 'Room changed', currentUser.name, `${oldRoom} → ${data.roomNumber}`);
+            if (oldService !== data.serviceId) addAuditEntry(existing, 'Service transfer', currentUser.name, `${getServiceName(oldService)} → ${getServiceName(data.serviceId)}`);
+            if (data.status === 'Discharged' && oldStatus !== 'Discharged') {
+              existing.archivedAt = new Date().toISOString();
+              existing.visitHistory = existing.visitHistory || [];
+              existing.visitHistory.push({ admittedAt: existing.createdAt, roomNumber: oldRoom, serviceId: oldService, dischargedAt: existing.archivedAt });
+              const archived = getArchivedPatients();
+              archived.push({ ...existing });
+              setArchivedPatients(archived);
+              patients.splice(idx, 1);
+              setPatients(patients);
+              closeModal();
+              renderNurseDashboard();
+              return;
+            }
+            setPatients(patients);
+          } else {
+            data.id = getNextId(patients);
+            data.createdAt = new Date().toISOString();
+            data.createdBy = currentUser.name;
+            data.auditTrail = [{ at: data.createdAt, by: currentUser.name, action: 'Profile created', details: '' }];
+            data.clinicalNotes = [];
+            data.visitHistory = [{ admittedAt: data.createdAt, roomNumber: data.roomNumber, serviceId: data.serviceId }];
+            patients.push(data);
+            setPatients(patients);
+            submitBtn.textContent = 'Generating AI summary...';
+            try {
+              data.aiSummary = await generateAISummary(data);
+            } catch (err) {
+              data.aiSummary = 'Summary could not be generated. You can retry from the patient profile.';
+            }
+            setPatients(getPatients().map(p => p.id === data.id ? data : p));
+          }
+          closeModal();
+          if (currentUser.role === 'nurse') renderNurseDashboard();
+        } catch (err) {
+          console.error(err);
+          alert('Error saving. Please try again.');
+        } finally {
+          isSaving = false;
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = isEdit ? 'Save' : 'Save & Generate AI Profile'; }
+        }
+      });
+    }
+
+    async function generateAISummary(patient) {
+      const apiKey = localStorage.getItem('pppe_claude_api_key') || '';
+      if (!apiKey) return 'Add your Anthropic API key in the profile to generate AI summaries.';
+      const text = [
+        `Patient: ${patient.fullName}, Age ${patient.age}, ${patient.gender}.`,
+        `Room: ${patient.roomNumber}. Service: ${getServiceName(patient.serviceId)}.`,
+        `Temperature: ${patient.tempPreference}. Noise: ${patient.noisePreference}.`,
+        `Dietary: ${patient.dietary || 'None'}. Sleep: ${patient.sleepSchedule || 'Not specified'}.`,
+        `Communication: ${patient.communicationStyle}. Beliefs: ${patient.beliefs || 'None'}.`,
+        `Hobbies: ${patient.hobbies || 'None'}. Dislikes: ${patient.dislikes || 'None'}.`,
+        `Visitation: ${patient.visitation || 'None'}. Notes: ${patient.additionalNotes || 'None'}.`
+      ].join(' ');
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 500,
+          messages: [{ role: 'user', content: `Summarize the following patient profile in 2-4 short paragraphs for care staff. Focus on how to make the patient comfortable and any important preferences or triggers. Be concise.\n\n${text}` }]
+        })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const json = await res.json();
+      const block = json.content && json.content[0];
+      return block && block.text ? block.text.trim() : 'Summary unavailable.';
+    }
+
+    function renderPatientCard(p, showService = false) {
+      const svc = getServices().find(s => s.id === p.serviceId);
+      const color = svc ? svc.color : '#64748b';
+      return `
+        <div class="bg-white rounded-xl shadow border border-slate-100 p-4 card-hover transition cursor-pointer" data-patient-id="${p.id}">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="font-semibold text-slate-800">${escapeHtml(p.fullName)}</p>
+              <p class="text-sm text-slate-500">${escapeHtml(p.medicalId || '')} · Room ${escapeHtml(p.roomNumber || '')}</p>
+              ${showService ? `<span class="inline-block mt-1 px-2 py-0.5 rounded text-xs text-white" style="background:${color}">${getServiceName(p.serviceId)}</span>` : ''}
+            </div>
+            <span class="px-2 py-0.5 rounded text-xs ${p.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">${p.status}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function openPatientDetail(patientId, isNurse = false) {
+      const patients = getPatients();
+      const patient = patients.find(p => p.id === patientId);
+      if (!patient) return;
+      const svc = getServices().find(s => s.id === patient.serviceId);
+      const color = svc ? svc.color : '#64748b';
+      const canEdit = isNurse && patient.serviceId === currentUser.serviceId;
+      const auditRows = (patient.auditTrail || []).slice(0, 15).map(a => `
+        <tr><td class="text-xs text-slate-500">${new Date(a.at).toLocaleString()}</td><td class="text-xs">${escapeHtml(a.by)}</td><td class="text-xs">${escapeHtml(a.action)}</td><td class="text-xs text-slate-600">${escapeHtml(a.details || '')}</td></tr>
+      `).join('');
+      openModal(`
+        <div class="p-6 max-h-[90vh] overflow-y-auto">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-lg font-bold text-slate-800">${escapeHtml(patient.fullName)}</h3>
+              <p class="text-sm text-slate-500">${escapeHtml(patient.medicalId || '')} · Room ${patient.roomNumber} · <span class="px-1.5 py-0.5 rounded text-xs text-white" style="background:${color}">${getServiceName(patient.serviceId)}</span></p>
+            </div>
+            <div class="flex gap-2">
+              ${canEdit ? `<button class="edit-patient-detail px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700" data-id="${patient.id}">Edit</button>` : ''}
+              <button class="qr-patient px-3 py-1.5 border border-slate-300 text-sm rounded-lg hover:bg-slate-50" data-id="${patient.id}">QR Code</button>
+            </div>
+          </div>
+          ${patient.aiSummary ? `<div class="mb-4 p-3 bg-indigo-50 rounded-lg"><h4 class="font-medium text-slate-700 mb-1">AI Summary</h4><p class="text-sm text-slate-600 whitespace-pre-wrap">${escapeHtml(patient.aiSummary)}</p><button class="regen-ai mt-2 text-xs text-indigo-600 hover:underline" data-id="${patient.id}">Regenerate summary</button></div>` : '<div class="mb-4 p-3 bg-slate-100 rounded-lg"><p class="text-sm text-slate-600">No AI summary. Add API key and regenerate from profile.</p><button class="regen-ai text-xs text-indigo-600 hover:underline" data-id="' + patient.id + '">Generate summary</button></div>'}
+          <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+            <p><span class="text-slate-500">Age/Gender:</span> ${patient.age} / ${patient.gender}</p>
+            <p><span class="text-slate-500">Status:</span> ${patient.status}</p>
+            <p><span class="text-slate-500">Temperature:</span> ${patient.tempPreference || '-'}</p>
+            <p><span class="text-slate-500">Noise:</span> ${patient.noisePreference || '-'}</p>
+            <p><span class="text-slate-500">Dietary:</span> ${escapeHtml((patient.dietary || '-').slice(0, 50))}</p>
+            <p><span class="text-slate-500">Communication:</span> ${patient.communicationStyle || '-'}</p>
+          </div>
+          ${(patient.clinicalNotes && patient.clinicalNotes.length) ? `<div class="mb-4"><h4 class="font-medium text-slate-700 mb-1">Clinical notes</h4><ul class="text-sm text-slate-600 space-y-1">${patient.clinicalNotes.map(n => `<li>${new Date(n.at).toLocaleString()} — ${escapeHtml(n.by)}: ${escapeHtml(n.text)}</li>`).join('')}</ul></div>` : ''}
+          ${currentUser.role === 'doctor' ? `<div class="mb-4"><label class="block font-medium text-slate-700 mb-1">Add clinical note</label><div class="flex gap-2"><input type="text" id="newClinicalNote" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg" placeholder="Observation..." /><button class="add-clinical-note px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700" data-id="${patient.id}">Add</button></div></div>` : ''}
+          ${canEdit ? `<div class="mb-4"><button class="transfer-patient px-3 py-1.5 border border-amber-500 text-amber-700 text-sm rounded-lg hover:bg-amber-50" data-id="${patient.id}">Transfer to other service</button></div>` : ''}
+          <div class="border-t border-slate-200 pt-3"><h4 class="font-medium text-slate-700 mb-1">Audit trail</h4><table class="w-full text-sm"><thead><tr><th class="text-left text-slate-500">Date</th><th class="text-left text-slate-500">By</th><th class="text-left text-slate-500">Action</th><th class="text-left text-slate-500">Details</th></tr></thead><tbody>${auditRows || '<tr><td colspan="4" class="text-slate-400">No history</td></tr>'}</tbody></table></div>
+        </div>
+      `);
+      const content = document.getElementById('modalContent');
+      content.querySelectorAll('.edit-patient-detail').forEach(btn => btn.addEventListener('click', () => { closeModal(); openPatientForm(parseInt(btn.dataset.id, 10)); }));
+      content.querySelectorAll('.qr-patient').forEach(btn => btn.addEventListener('click', () => showQRModal(parseInt(btn.dataset.id, 10))));
+      content.querySelectorAll('.regen-ai').forEach(btn => btn.addEventListener('click', async () => {
+        const id = parseInt(btn.dataset.id, 10);
+        btn.textContent = 'Generating...';
+        try {
+          const p = getPatients().find(x => x.id === id);
+          if (p) { p.aiSummary = await generateAISummary(p); setPatients(getPatients().map(x => x.id === id ? p : x)); closeModal(); openPatientDetail(id, isNurse); }
+        } finally { btn.textContent = 'Regenerate summary'; }
+      }));
+      content.querySelectorAll('.add-clinical-note').forEach(btn => btn.addEventListener('click', () => {
+        const id = parseInt(btn.dataset.id, 10);
+        const input = content.querySelector('#newClinicalNote');
+        const text = input && input.value.trim();
+        if (!text) return;
+        const patients = getPatients();
+        const idx = patients.findIndex(p => p.id === id);
+        if (idx === -1) return;
+        patients[idx].clinicalNotes = patients[idx].clinicalNotes || [];
+        patients[idx].clinicalNotes.push({ at: new Date().toISOString(), by: currentUser.name, text });
+        setPatients(patients);
+        input.value = '';
+        closeModal();
+        openPatientDetail(id, false);
+      }));
+      content.querySelectorAll('.transfer-patient').forEach(btn => btn.addEventListener('click', () => openTransferModal(parseInt(btn.dataset.id, 10))));
+    }
+
+    function showQRModal(patientId) {
+      const patient = getPatients().find(p => p.id === patientId);
+      if (!patient) return;
+      const qrData = JSON.stringify({
+        id: patient.id,
+        fullName: patient.fullName,
+        age: patient.age,
+        gender: patient.gender,
+        roomNumber: patient.roomNumber,
+        serviceId: patient.serviceId,
+        serviceName: getServiceName(patient.serviceId),
+        status: patient.status,
+        medicalId: patient.medicalId
+      });
+      const div = document.createElement('div');
+      div.className = 'p-6 text-center';
+      div.innerHTML = `<p class="font-medium text-slate-800 mb-2">Patient: ${escapeHtml(patient.fullName)} (ID: ${patient.id})</p><div id="qrCanvas" class="inline-block p-2 bg-white border border-slate-200 rounded-lg"></div>`;
+      openModal(div.outerHTML);
+      setTimeout(() => {
+        const container = document.getElementById('qrCanvas');
+        if (container && typeof QRCode !== 'undefined') {
+          try {
+            new QRCode(container, { text: qrData, width: 180, height: 180 });
+          } catch (e) { container.innerHTML = '<p class="text-red-500 text-sm">QR error</p>'; }
+        }
+      }, 100);
+    }
+
+    function openTransferModal(patientId) {
+      const patient = getPatients().find(p => p.id === patientId);
+      if (!patient) return;
+      const services = getServices().filter(s => s.id !== patient.serviceId);
+      openModal(`
+        <div class="p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-2">Transfer Patient</h3>
+          <p class="text-slate-600 mb-4">${escapeHtml(patient.fullName)} — from ${getServiceName(patient.serviceId)}</p>
+          <form id="transferForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">To Service</label>
+              <select id="transferServiceId" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                ${services.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+              </select>
+            </div>
+            <div class="flex justify-end gap-2">
+              <button type="button" class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50" onclick="closeModal()">Cancel</button>
+              <button type="submit" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">Transfer</button>
+            </div>
+          </form>
+        </div>
+      `);
+      document.getElementById('transferForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const serviceId = parseInt(document.getElementById('transferServiceId').value, 10);
+        const patients = getPatients();
+        const idx = patients.findIndex(p => p.id === patientId);
+        if (idx === -1) return;
+        const oldService = patients[idx].serviceId;
+        patients[idx].serviceId = serviceId;
+        addAuditEntry(patients[idx], 'Transferred', currentUser.name, `${getServiceName(oldService)} → ${getServiceName(serviceId)}`);
+        setPatients(patients);
+        closeModal();
+        renderNurseDashboard();
+      });
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ============ DOCTOR ============
+    function renderDoctorDashboard() {
+      const services = getServices();
+      const select = document.getElementById('doctorServiceFilter');
+      const current = select.value;
+      select.innerHTML = '<option value="">All Services</option>' + services.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+      select.value = current || '';
+
+      let list = getPatients();
+      const filterSvc = select.value ? parseInt(select.value, 10) : null;
+      if (filterSvc) list = list.filter(p => p.serviceId === filterSvc);
+      const q = document.getElementById('doctorSearch').value.trim().toLowerCase();
+      if (q) list = list.filter(p =>
+        (p.fullName && p.fullName.toLowerCase().includes(q)) ||
+        (p.medicalId && p.medicalId.toLowerCase().includes(q)) ||
+        (p.roomNumber && p.roomNumber.toLowerCase().includes(q))
+      );
+      const grid = document.getElementById('doctorPatientsGrid');
+      grid.innerHTML = list.map(p => renderPatientCard(p, true)).join('');
+      grid.querySelectorAll('[data-patient-id]').forEach(el => {
+        el.addEventListener('click', () => openPatientDetail(parseInt(el.dataset.patientId, 10), false));
+      });
+    }
+
+    document.getElementById('doctorSearch').addEventListener('input', () => renderDoctorDashboard());
+    document.getElementById('doctorServiceFilter').addEventListener('change', () => renderDoctorDashboard());
+
+    // ============ NURSE REGISTER + DISCHARGE HANDLING ============
+    document.getElementById('nurseRegisterPatient').addEventListener('click', () => openPatientForm(null));
+
+    // When status is changed to Discharged in form, we already handle archive in submit. When editing and only changing status to Discharged, we need to archive.
+    // Already handled in patientForm submit: if data.status === 'Discharged' && oldStatus !== 'Discharged' we archive.
+
+    // ============ LOGIN / LOGOUT ============
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const err = document.getElementById('loginError');
+      if (login(username, password)) {
+        err.classList.add('hidden');
+        showApp();
+      } else {
+        err.textContent = 'Invalid username or password.';
+        err.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      currentUser = null;
+      document.getElementById('appContainer').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginError').classList.add('hidden');
+    });
+
+    // API Key settings
+    document.getElementById('apiKeyBtn').addEventListener('click', () => {
+      const current = localStorage.getItem('pppe_claude_api_key') || '';
+      openModal(`
+        <div class="p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-2">Claude API Key</h3>
+          <p class="text-sm text-slate-600 mb-3">Used for AI-generated patient summaries. Stored locally only.</p>
+          <input type="password" id="apiKeyInput" class="w-full px-4 py-2 border border-slate-300 rounded-lg mb-4" value="${current.replace(/./g, '*')}" placeholder="sk-ant-..." />
+          <div class="flex justify-end gap-2">
+            <button type="button" class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50" onclick="closeModal()">Cancel</button>
+            <button type="button" id="apiKeySave" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+          </div>
+        </div>
+      `);
+      const input = document.getElementById('apiKeyInput');
+      input.placeholder = 'Enter key to set or leave masked to keep current';
+      input.value = '';
+      input.focus();
+      document.getElementById('apiKeySave').addEventListener('click', () => {
+        const v = document.getElementById('apiKeyInput').value.trim();
+        if (v) localStorage.setItem('pppe_claude_api_key', v);
+        closeModal();
+      });
+    });
+
+    initAuth();
+  </script>
+</body>
+</html>
