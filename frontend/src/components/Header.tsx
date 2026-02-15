@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import { useT, type Lang } from '../i18n';
 
 interface User {
   name: string;
@@ -20,7 +21,14 @@ const LogOutIcon = () => (
   </svg>
 );
 
+const LANGS: { code: Lang; label: string }[] = [
+  { code: 'en', label: 'EN' },
+  { code: 'fr', label: 'FR' },
+  { code: 'ar', label: 'AR' },
+];
+
 export default function Header({ user, onLogout }: HeaderProps) {
+  const { t, lang, setLang } = useT();
   const [serviceName, setServiceName] = useState('');
 
   useEffect(() => {
@@ -30,9 +38,9 @@ export default function Header({ user, onLogout }: HeaderProps) {
         setServiceName(s ? s.name : '');
       });
     } else {
-      setServiceName(user.role === 'admin' ? 'All services' : '');
+      setServiceName(user.role === 'admin' ? t('header.allServices') : '');
     }
-  }, [user]);
+  }, [user, t]);
 
   return (
     <header className="gradient-header shadow-lg shadow-primary/5">
@@ -42,7 +50,7 @@ export default function Header({ user, onLogout }: HeaderProps) {
           {/* Logo */}
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center ring-1 ring-white/20 overflow-hidden shadow-sm">
-              <img src="/care-id-icon.png" alt="CARE-ID" className="h-9 w-9 object-cover" />
+              <img src="/care-id-icon.png" alt={t('header.logoAlt')} className="h-9 w-9 object-cover" />
             </div>
             <span className="text-lg font-bold text-white tracking-tight hidden sm:inline">CARE-ID</span>
           </div>
@@ -62,8 +70,26 @@ export default function Header({ user, onLogout }: HeaderProps) {
           </div>
         </div>
 
-        {/* Right: Service + Logout */}
+        {/* Right: Lang Switcher + Service + Logout */}
         <div className="flex items-center gap-3">
+          {/* Language switcher */}
+          <div className="flex items-center bg-white/10 rounded-lg ring-1 ring-white/10 overflow-hidden">
+            {LANGS.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => setLang(l.code)}
+                className={`px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
+                  lang === l.code
+                    ? 'bg-white text-primary'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
+
           {serviceName && (
             <span className="text-xs font-medium text-white/70 bg-white/10 px-3 py-1.5 rounded-lg ring-1 ring-white/10">
               {serviceName}
@@ -75,7 +101,7 @@ export default function Header({ user, onLogout }: HeaderProps) {
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-all duration-200 ring-1 ring-white/10 active:scale-[0.97]"
           >
             <LogOutIcon />
-            <span className="hidden sm:inline">Logout</span>
+            <span className="hidden sm:inline">{t('header.logout')}</span>
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from '../i18n';
 
 interface Patient {
   fullName: string;
@@ -31,6 +32,7 @@ const RoomIcon = () => (
 );
 
 export default function PatientCard({ patient, serviceName, serviceColor, onClick }: PatientCardProps) {
+  const { t } = useT();
   const color = serviceColor || 'hsl(var(--muted-foreground))';
 
   return (
@@ -56,7 +58,7 @@ export default function PatientCard({ patient, serviceName, serviceColor, onClic
                 <span className="font-mono">{patient.medicalId || '—'}</span>
                 <span className="text-border">|</span>
                 <RoomIcon />
-                <span>{patient.roomNumber}</span>
+                <span>{t('card.room')} {patient.roomNumber}</span>
               </div>
             </div>
           </div>

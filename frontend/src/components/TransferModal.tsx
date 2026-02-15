@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useT } from '../i18n';
 import Modal from './Modal';
 
 interface TransferModalProps {
@@ -21,6 +22,7 @@ const AlertIcon = () => (
 );
 
 export default function TransferModal({ patient, services, onTransfer, onClose }: TransferModalProps) {
+  const { t } = useT();
   const [serviceId, setServiceId] = useState('');
   const [saving, setSaving] = useState(false);
   const [confirmStep, setConfirmStep] = useState(false);
@@ -58,15 +60,15 @@ export default function TransferModal({ patient, services, onTransfer, onClose }
             <ArrowRightIcon />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-card-foreground">Transfer Patient</h3>
-            <p className="text-sm text-muted-foreground">{patient?.fullName} — from {fromService?.name}</p>
+            <h3 className="text-xl font-bold text-card-foreground">{t('transfer.title')}</h3>
+            <p className="text-sm text-muted-foreground">{patient?.fullName} — {t('transfer.from')} {fromService?.name}</p>
           </div>
         </div>
 
         {!confirmStep ? (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="label-field">Transfer to</label>
+              <label className="label-field">{t('transfer.toService')}</label>
               <select value={serviceId} onChange={(e) => setServiceId(e.target.value)} className="select-field">
                 {options.map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -74,9 +76,9 @@ export default function TransferModal({ patient, services, onTransfer, onClose }
               </select>
             </div>
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+              <button type="button" onClick={onClose} className="btn-secondary">{t('transfer.cancel')}</button>
               <button type="submit" className="btn-warning flex items-center gap-1.5">
-                <ArrowRightIcon /> Transfer
+                <ArrowRightIcon /> {t('transfer.transfer')}
               </button>
             </div>
           </form>
@@ -92,7 +94,7 @@ export default function TransferModal({ patient, services, onTransfer, onClose }
               </div>
             </div>
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={() => setConfirmStep(false)} className="btn-secondary">Go back</button>
+              <button type="button" onClick={() => setConfirmStep(false)} className="btn-secondary">{t('transfer.goBack')}</button>
               <button type="button" onClick={handleConfirm} disabled={saving} className="btn-warning flex items-center gap-1.5">
                 {saving ? (
                   <span className="flex items-center gap-2">
@@ -100,9 +102,9 @@ export default function TransferModal({ patient, services, onTransfer, onClose }
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    Transferring...
+                    {t('transfer.transferring')}
                   </span>
-                ) : 'Confirm transfer'}
+                ) : t('transfer.confirm')}
               </button>
             </div>
           </div>

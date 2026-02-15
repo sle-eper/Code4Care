@@ -308,3 +308,23 @@
     background-size: 24px 24px;
   }
 }
+
+/* ── RTL Overrides for Arabic ── */
+[dir="rtl"] {
+  /* Flip accent-left border to accent-right */
+  .accent-left {
+    @apply border-l-0 border-r-[3px] border-r-primary;
+  }
+
+  /* Select field: move dropdown arrow to the left side */
+  .select-field {
+    background-position: left 14px center;
+    padding-left: 2.5rem;
+    padding-right: 1rem;
+  }
+
+  /* Table header text alignment */
+  th {
+    text-align: right;
+  }
+}

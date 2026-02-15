@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useT } from '../i18n';
 import { api } from '../api';
 import Modal from './Modal';
 import PatientCard from './PatientCard';
@@ -37,6 +38,7 @@ const RefreshIcon = () => (
 );
 
 export default function NurseDashboard({ user }: NurseDashboardProps) {
+  const { t } = useT();
   const [services, setServices] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,28 +147,28 @@ export default function NurseDashboard({ user }: NurseDashboardProps) {
     try {
       if (formPatient) {
         const updated = await api.patients.update(formPatient.id, { ...payload, updatedBy: user.name });
-        setSavingLabel('Regenerating summary...');
+        setSavingLabel(t('nurse.regeneratingSummary'));
         let summary = '';
         try {
           const res = await api.ai.summary({ ...updated, serviceName: getService(updated.serviceId)?.name });
           summary = res.summary || '';
         } catch (err: any) {
           summary = updated.aiSummary || '';
-          if (!summary) alert(`Summary failed: ${err.message || 'Unknown error'}.`);
+          if (!summary) alert(t('nurse.summaryFailed', { error: err.message || 'Unknown error' }));
         }
         if (summary) await api.patients.update(formPatient.id, { ...updated, aiSummary: summary, updatedBy: user.name });
         closeFormModal(); load();
       } else {
         const created = await api.patients.create({ ...payload, createdBy: user.name });
-        if (options.basicOnly) { closeFormModal(); load(); alert('Patient registered. Open this patient at the bedside to complete the questionnaire.'); return; }
-        setSavingLabel('Generating profile summary...');
+        if (options.basicOnly) { closeFormModal(); load(); alert(t('nurse.patientRegistered')); return; }
+        setSavingLabel(t('nurse.generatingSummary'));
         let summary = '';
         try {
           const res = await api.ai.summary({ ...created, serviceName: getService(created.serviceId)?.name });
           summary = res.summary || '';
         } catch (err: any) {
-          summary = 'Profile summary could not be generated.';
-          alert(`Summary failed: ${err.message || 'Unknown error'}.`);
+          summary = t('nurse.summaryNotGenerated');
+          alert(t('nurse.summaryFailed', { error: err.message || 'Unknown error' }));
         }
         await api.patients.update(created.id, { ...created, aiSummary: summary, updatedBy: user.name });
         closeFormModal(); load();
@@ -199,7 +201,7 @@ export default function NurseDashboard({ user }: NurseDashboardProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Nurse Dashboard</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t('nurse.title')}</h2>
         <p className="text-sm text-muted-foreground mt-0.5">Manage and monitor your patients</p>
       </div>
 
@@ -210,7 +212,7 @@ export default function NurseDashboard({ user }: NurseDashboardProps) {
             <HeartPulseIcon />
           </div>
           <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Patients in my service</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('nurse.patientsInService')}</p>
             <p className="text-2xl font-bold text-primary mt-0.5">{myPatients.length}</p>
           </div>
         </div>
@@ -219,27 +221,27 @@ export default function NurseDashboard({ user }: NurseDashboardProps) {
       {/* Actions */}
       <div className="flex flex-wrap gap-3 items-center">
         <button type="button" onClick={() => openForm(null)} className="btn-primary flex items-center gap-2">
-          <PlusIcon /> Register new patient
+          <PlusIcon /> {t('nurse.registerPatient')}
         </button>
         <button type="button" onClick={() => setShowReturningSearch(!showReturningSearch)} className="btn-secondary flex items-center gap-2">
-          <RefreshIcon /> Find returning patient
+          <RefreshIcon /> {t('nurse.findReturning')}
         </button>
       </div>
 
       {/* Returning Search */}
       {showReturningSearch && (
         <div className="bg-card rounded-2xl shadow-card border border-border p-5 animate-slide-up">
-          <p className="text-sm text-muted-foreground mb-3">Search by Medical ID or name to reactivate a discharged patient.</p>
+          <p className="text-sm text-muted-foreground mb-3">{t('nurse.returningSearchDesc')}</p>
           <div className="flex gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50"><SearchIcon /></span>
               <input type="text" value={returningSearch}
                 onChange={(e) => setReturningSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && searchReturning()}
-                placeholder="Medical ID or name..."
+                placeholder={t('nurse.returningSearchPlaceholder')}
                 className="input-field pl-10" />
             </div>
-            <button type="button" onClick={searchReturning} className="btn-primary">Search</button>
+            <button type="button" onClick={searchReturning} className="btn-primary">{t('nurse.search')}</button>
           </div>
           {returningResults.length > 0 && (
             <ul className="mt-4 divide-y divide-border">
@@ -251,7 +253,7 @@ export default function NurseDashboard({ user }: NurseDashboardProps) {
                     {p.status !== 'Active' && <span className="badge-discharged ml-2">{p.status}</span>}
                   </span>
                   <button type="button" onClick={() => openDetail(p.id)} className="text-primary text-sm font-semibold hover:underline">
-                    Open
+                    {t('nurse.open')}
                   </button>
                 </li>
               ))}
@@ -288,38 +290,38 @@ export default function NurseDashboard({ user }: NurseDashboardProps) {
               onSave={handleSavePatient} onClose={closeFormModal} saving={saving} savingLabel={savingLabel} />
           ) : registerStep === 'medical_id' ? (
             <div className="p-6">
-              <h3 className="text-xl font-bold text-card-foreground mb-1">Register new patient</h3>
-              <p className="text-sm text-muted-foreground mb-5">Enter the patient's Medical ID. If they are already registered we'll open their profile.</p>
+              <h3 className="text-xl font-bold text-card-foreground mb-1">{t('nurse.registerTitle')}</h3>
+              <p className="text-sm text-muted-foreground mb-5">{t('nurse.registerDesc')}</p>
               <div className="flex gap-3 items-end flex-wrap">
                 <div className="flex-1 min-w-[200px]">
                   <label className="label-field">Medical ID</label>
                   <input type="text" value={registerMedicalId}
                     onChange={(e) => setRegisterMedicalId(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleLookupContinue()}
-                    placeholder="Enter medical ID"
+                    placeholder={t('nurse.medicalIdPlaceholder')}
                     className="input-field" autoFocus />
                 </div>
                 <button type="button" onClick={handleLookupContinue}
                   disabled={lookupLoading || !(registerMedicalId || '').trim()}
                   className="btn-primary mb-px">
-                  {lookupLoading ? 'Checking...' : 'Continue'}
+                  {lookupLoading ? t('nurse.checking') : t('nurse.continue')}
                 </button>
               </div>
             </div>
           ) : registerStep === 'already_exists' && registerExistingPatient ? (
             <div className="p-6">
-              <h3 className="text-xl font-bold text-card-foreground mb-3">Patient already registered</h3>
+              <h3 className="text-xl font-bold text-card-foreground mb-3">{t('nurse.alreadyRegisteredTitle')}</h3>
               <div className="p-4 bg-accent rounded-2xl border border-primary/15 mb-5">
                 <p className="text-sm text-accent-foreground">
                   <strong>{registerExistingPatient.fullName}</strong> · Medical ID: {registerExistingPatient.medicalId} · Room: {registerExistingPatient.roomNumber}
                 </p>
               </div>
-              <p className="text-sm text-muted-foreground mb-5">Open their profile to view or edit.</p>
+              <p className="text-sm text-muted-foreground mb-5">{t('nurse.alreadyRegisteredDesc')}</p>
               <div className="flex gap-3">
                 <button type="button" onClick={() => { closeFormModal(); openDetail(registerExistingPatient.id); }} className="btn-primary">
-                  Open profile
+                  {t('nurse.openProfile')}
                 </button>
-                <button type="button" onClick={closeFormModal} className="btn-secondary">Cancel</button>
+                <button type="button" onClick={closeFormModal} className="btn-secondary">{t('nurse.cancel')}</button>
               </div>
             </div>
           ) : registerStep === 'basic_form' ? (

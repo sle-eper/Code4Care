@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useT } from '../i18n';
 import { api } from '../api';
 import Modal from './Modal';
 import PatientCard from './PatientCard';
@@ -21,6 +22,7 @@ const StethIcon = () => (
 );
 
 export default function DoctorDashboard({ user }: DoctorDashboardProps) {
+  const { t } = useT();
   const [services, setServices] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -48,8 +50,8 @@ export default function DoctorDashboard({ user }: DoctorDashboardProps) {
   }, [serviceFilter, search]);
 
   useEffect(() => {
-    const t = setTimeout(load, 200);
-    return () => clearTimeout(t);
+    const id = setTimeout(load, 200);
+    return () => clearTimeout(id);
   }, [load]);
 
   const getService = (id: number) => services.find((s) => s.id === id);
@@ -83,7 +85,7 @@ export default function DoctorDashboard({ user }: DoctorDashboardProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Doctor Dashboard</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t('doctor.title')}</h2>
         <p className="text-sm text-muted-foreground mt-0.5">View patients and add clinical notes</p>
       </div>
 
@@ -93,13 +95,13 @@ export default function DoctorDashboard({ user }: DoctorDashboardProps) {
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2"><SearchIcon /></span>
           <input type="text" value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, medical ID, or room..."
+            placeholder={t('doctor.searchPlaceholder')}
             className="input-field pl-10" />
         </div>
         <select value={serviceFilter}
           onChange={(e) => setServiceFilter(e.target.value)}
           className="select-field w-auto min-w-[160px]">
-          <option value="">All Services</option>
+          <option value="">{t('doctor.allServices')}</option>
           {services.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}

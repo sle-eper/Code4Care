@@ -1,12 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { api } from './api';
+import { LanguageProvider, useT } from './i18n';
 import Login from './components/Login';
 import Header from './components/Header';
 import AdminDashboard from './components/AdminDashboard';
 import NurseDashboard from './components/NurseDashboard';
 import DoctorDashboard from './components/DoctorDashboard';
 
-export default function App() {
+function AppInner() {
+  const { t, dir } = useT();
   const [user, setUser] = useState<any>(() => {
     try {
       const saved = sessionStorage.getItem('c4c_user');
@@ -26,11 +28,11 @@ export default function App() {
       setUser(data.user);
       sessionStorage.setItem('c4c_user', JSON.stringify(data.user));
     } catch (e: any) {
-      setError(e.message || 'Login failed');
+      setError(e.message || t('login.failed'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const logout = useCallback(() => {
     setUser(null);
@@ -42,7 +44,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background relative" dir={dir}>
       {/* Subtle background pattern */}
       <div className="fixed inset-0 dot-pattern opacity-40 pointer-events-none" />
       <div className="relative">
@@ -54,5 +56,13 @@ export default function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppInner />
+    </LanguageProvider>
   );
 }

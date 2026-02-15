@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import Modal from './Modal';
 import { api } from '../api';
+import { useT } from '../i18n';
 
 interface PatientDetailProps {
   patient: any;
@@ -87,6 +88,7 @@ export default function PatientDetail({
   patient, serviceName, serviceColor, canEdit, isDoctor, userName,
   onClose, onEdited, onTransfer, onReactivate,
 }: PatientDetailProps) {
+  const { t } = useT();
   const [newNote, setNewNote] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [addingNote, setAddingNote] = useState(false);
@@ -111,10 +113,10 @@ export default function PatientDetail({
         await api.patients.update(patient.id, { aiSummary: summary, updatedBy: userName });
         onEdited?.();
       } else {
-        alert('No summary returned. Check backend and .env (MINIMAX_API_KEY).');
+        alert(t('detail.noSummaryReturned'));
       }
     } catch (e: any) {
-      alert(e.message || 'Failed to generate summary.');
+      alert(e.message || t('detail.failedToGenerateSummary'));
     } finally {
       setGeneratingSummary(false);
     }
@@ -164,64 +166,64 @@ export default function PatientDetail({
   const buildTtsText = () => {
     const parts: string[] = [];
 
-    parts.push(`Care profile for ${patient.fullName}.`);
-    parts.push(`Room ${patient.roomNumber}, ${serviceName || 'unknown service'}.`);
+    parts.push(t('tts.careProfileFor', { name: patient.fullName }));
+    parts.push(t('tts.roomAndService', { room: patient.roomNumber, service: serviceName || t('tts.unknownService') }));
 
     // Comfort & Environment
-    parts.push(`Comfort and environment.`);
-    parts.push(`Temperature preference: ${patient.tempPreference || 'Not specified'}.`);
-    parts.push(`Noise level: ${patient.noisePreference || 'Not specified'}.`);
+    parts.push(t('tts.comfortAndEnvironment'));
+    parts.push(t('tts.temperaturePref', { value: patient.tempPreference || t('detail.notSpecified') }));
+    parts.push(t('tts.noiseLevel', { value: patient.noisePreference || t('detail.notSpecified') }));
     if (patient.sleepSchedule) {
-      parts.push(`Sleep schedule: ${patient.sleepSchedule}.`);
+      parts.push(t('tts.sleepSchedule', { value: patient.sleepSchedule }));
     }
 
     // Diet
-    parts.push(`Diet and preferences: ${patient.dietary || 'No dietary restrictions'}.`);
+    parts.push(t('tts.dietAndPreferences', { value: patient.dietary || t('tts.noDietaryRestrictions') }));
 
     // Avoid
-    parts.push(`Things to avoid: ${patient.dislikes || 'Nothing specific noted'}.`);
+    parts.push(t('tts.thingsToAvoid', { value: patient.dislikes || t('tts.nothingSpecificNoted') }));
     if (patient.beliefs) {
-      parts.push(`Beliefs to be aware of: ${patient.beliefs}.`);
+      parts.push(t('tts.beliefsAware', { value: patient.beliefs }));
     }
 
     // Interaction
-    parts.push(`Communication style: ${patient.communicationStyle || 'Not specified'}.`);
+    parts.push(t('tts.communicationStyle', { value: patient.communicationStyle || t('detail.notSpecified') }));
 
     // Practical tips
     if (patient.visitation) {
-      parts.push(`Visitation preferences: ${patient.visitation}.`);
+      parts.push(t('tts.visitationPreferences', { value: patient.visitation }));
     }
     if (patient.hobbies) {
-      parts.push(`Hobbies and interests: ${patient.hobbies}.`);
+      parts.push(t('tts.hobbiesAndInterests', { value: patient.hobbies }));
     }
 
     // Care preferences
     if (patient.doctorGenderPref && patient.doctorGenderPref !== 'No preference') {
-      parts.push(`Nurse gender preference: ${patient.doctorGenderPref}.`);
+      parts.push(t('tts.nurseGenderPref', { value: patient.doctorGenderPref }));
     }
     if (patient.preferredLanguage) {
-      parts.push(`Preferred language: ${patient.preferredLanguage}.`);
+      parts.push(t('tts.preferredLanguage', { value: patient.preferredLanguage }));
     }
-    parts.push(`Pain tolerance: ${patient.painTolerance || 'Moderate'}.`);
-    parts.push(`Emotional support needed: ${patient.emotionalSupport || 'Sometimes'}.`);
+    parts.push(t('tts.painTolerance', { value: patient.painTolerance || t('detail.moderate') }));
+    parts.push(t('tts.emotionalSupport', { value: patient.emotionalSupport || t('detail.sometimes') }));
     if (patient.physicalContactOk) {
-      parts.push(`Physical contact: ${patient.physicalContactOk}.`);
+      parts.push(t('tts.physicalContact', { value: patient.physicalContactOk }));
     }
 
     // Health & safety
     if (patient.fearOfNeedles === 'Yes') {
-      parts.push(`Important: this patient has a fear of needles.`);
+      parts.push(t('tts.fearOfNeedles'));
     }
     if (patient.knownAllergies) {
-      parts.push(`Known allergies: ${patient.knownAllergies}.`);
+      parts.push(t('tts.knownAllergies', { value: patient.knownAllergies }));
     }
 
     // Additional notes
     if (patient.additionalNotes) {
-      parts.push(`Additional notes: ${patient.additionalNotes}.`);
+      parts.push(t('tts.additionalNotes', { value: patient.additionalNotes }));
     }
 
-    parts.push(`End of care profile.`);
+    parts.push(t('tts.endOfCareProfile'));
 
     return parts.join(' ');
   };
@@ -254,95 +256,95 @@ export default function PatientDetail({
       audio.onended = () => setTtsState('idle');
       audio.onerror = () => {
         setTtsState('idle');
-        alert('Audio playback failed.');
+        alert(t('detail.audioPlaybackFailed'));
       };
 
       await audio.play();
       setTtsState('playing');
     } catch (e: any) {
       setTtsState('idle');
-      alert(e.message || 'Text-to-speech failed.');
+      alert(e.message || t('detail.ttsFailed'));
     }
   };
 
   const qrData = [
-    'PATIENT',
-    `${patient.fullName} · Room ${patient.roomNumber}`,
-    `Medical ID: ${patient.medicalId || '\u2014'}`,
-    `Service: ${serviceName || '\u2014'}`,
-    `Age ${patient.age} · ${patient.gender}`,
+    t('qr.patient'),
+    `${patient.fullName} · ${t('detail.room')} ${patient.roomNumber}`,
+    `${t('qr.medicalId')}: ${patient.medicalId || '\u2014'}`,
+    `${t('qr.service')}: ${serviceName || '\u2014'}`,
+    `${t('qr.age')} ${patient.age} · ${patient.gender}`,
     '',
-    'CARE PROFILE',
-    `Temperature: ${patient.tempPreference || '-'}`,
-    `Noise: ${patient.noisePreference || '-'}`,
-    `Dietary: ${patient.dietary || 'None'}`,
-    `Sleep: ${patient.sleepSchedule || '-'}`,
-    `Communication: ${patient.communicationStyle || '-'}`,
-    `Beliefs: ${patient.beliefs || '-'}`,
-    `Hobbies: ${patient.hobbies || '-'}`,
-    `Dislikes: ${patient.dislikes || '-'}`,
-    `Visitation: ${patient.visitation || '-'}`,
-    `Nurse gender: ${patient.doctorGenderPref || '-'}`,
-    patient.preferredLanguage ? `Language: ${patient.preferredLanguage}` : '',
-    `Pain tolerance: ${patient.painTolerance || '-'}`,
-    `Fear of needles: ${patient.fearOfNeedles || 'No'}`,
-    patient.knownAllergies ? `Allergies: ${patient.knownAllergies}` : '',
-    patient.physicalContactOk ? `Contact: ${patient.physicalContactOk}` : '',
-    `Emotional support: ${patient.emotionalSupport || '-'}`,
-    patient.additionalNotes ? `Notes: ${patient.additionalNotes}` : '',
+    t('qr.careProfile'),
+    `${t('qr.temperature')}: ${patient.tempPreference || '-'}`,
+    `${t('qr.noise')}: ${patient.noisePreference || '-'}`,
+    `${t('qr.dietary')}: ${patient.dietary || t('qr.none')}`,
+    `${t('qr.sleep')}: ${patient.sleepSchedule || '-'}`,
+    `${t('qr.communication')}: ${patient.communicationStyle || '-'}`,
+    `${t('qr.beliefs')}: ${patient.beliefs || '-'}`,
+    `${t('qr.hobbies')}: ${patient.hobbies || '-'}`,
+    `${t('qr.dislikes')}: ${patient.dislikes || '-'}`,
+    `${t('qr.visitation')}: ${patient.visitation || '-'}`,
+    `${t('qr.nurseGender')}: ${patient.doctorGenderPref || '-'}`,
+    patient.preferredLanguage ? `${t('qr.language')}: ${patient.preferredLanguage}` : '',
+    `${t('qr.painTolerance')}: ${patient.painTolerance || '-'}`,
+    `${t('qr.fearOfNeedles')}: ${patient.fearOfNeedles || 'No'}`,
+    patient.knownAllergies ? `${t('qr.allergies')}: ${patient.knownAllergies}` : '',
+    patient.physicalContactOk ? `${t('qr.contact')}: ${patient.physicalContactOk}` : '',
+    `${t('qr.emotionalSupport')}: ${patient.emotionalSupport || '-'}`,
+    patient.additionalNotes ? `${t('qr.notes')}: ${patient.additionalNotes}` : '',
   ].filter(Boolean).join('\n');
 
   const hasProfile = patient.dietary || patient.sleepSchedule || patient.beliefs || patient.hobbies || patient.dislikes || patient.visitation || patient.additionalNotes || (patient.tempPreference && patient.tempPreference !== 'Moderate') || (patient.noisePreference && patient.noisePreference !== 'Moderate') || (patient.communicationStyle && patient.communicationStyle !== 'Simple') || (patient.doctorGenderPref && patient.doctorGenderPref !== 'No preference') || patient.preferredLanguage || (patient.painTolerance && patient.painTolerance !== 'Moderate') || patient.fearOfNeedles === 'Yes' || patient.knownAllergies || patient.physicalContactOk || (patient.emotionalSupport && patient.emotionalSupport !== 'Sometimes');
 
   const profileSections = [
     {
-      icon: <ThermIcon />, title: 'Comfort & Environment',
+      icon: <ThermIcon />, title: t('detail.comfortEnvironment'),
       items: [
-        { label: 'Temperature', value: patient.tempPreference || 'Not specified' },
-        { label: 'Noise', value: patient.noisePreference || 'Not specified' },
-        ...(patient.sleepSchedule ? [{ label: 'Sleep', value: patient.sleepSchedule }] : []),
+        { label: t('detail.temperature'), value: patient.tempPreference || t('detail.notSpecified') },
+        { label: t('detail.noise'), value: patient.noisePreference || t('detail.notSpecified') },
+        ...(patient.sleepSchedule ? [{ label: t('detail.sleep'), value: patient.sleepSchedule }] : []),
       ],
     },
     {
-      icon: <UtensilsIcon />, title: 'Diet & Preferences',
-      items: [{ label: '', value: patient.dietary || 'No dietary restrictions' }],
+      icon: <UtensilsIcon />, title: t('detail.dietPreferences'),
+      items: [{ label: '', value: patient.dietary || t('detail.noDietaryRestrictions') }],
     },
     {
-      icon: <ShieldIcon />, title: 'Avoid & Sensitivities',
+      icon: <ShieldIcon />, title: t('detail.avoidSensitivities'),
       items: [
-        { label: '', value: patient.dislikes || 'Nothing specific noted' },
-        ...(patient.beliefs ? [{ label: 'Beliefs', value: patient.beliefs }] : []),
+        { label: '', value: patient.dislikes || t('detail.nothingSpecificNoted') },
+        ...(patient.beliefs ? [{ label: t('detail.beliefs'), value: patient.beliefs }] : []),
       ],
     },
     {
-      icon: <MessageIcon />, title: 'How to Interact',
-      items: [{ label: 'Communication', value: patient.communicationStyle || 'Not specified' }],
+      icon: <MessageIcon />, title: t('detail.howToInteract'),
+      items: [{ label: t('detail.communication'), value: patient.communicationStyle || t('detail.notSpecified') }],
     },
     {
-      icon: <ClipboardIcon />, title: 'Practical Tips',
+      icon: <ClipboardIcon />, title: t('detail.practicalTips'),
       items: [
-        ...(patient.visitation ? [{ label: 'Visitation', value: patient.visitation }] : []),
-        ...(patient.hobbies ? [{ label: 'Hobbies', value: patient.hobbies }] : []),
-        ...(!patient.visitation && !patient.hobbies ? [{ label: '', value: 'No specific tips noted' }] : []),
+        ...(patient.visitation ? [{ label: t('detail.visitation'), value: patient.visitation }] : []),
+        ...(patient.hobbies ? [{ label: t('detail.hobbies'), value: patient.hobbies }] : []),
+        ...(!patient.visitation && !patient.hobbies ? [{ label: '', value: t('detail.noSpecificTips') }] : []),
       ],
     },
     {
       icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>,
-      title: 'Care Preferences',
+      title: t('detail.carePreferences'),
       items: [
-        { label: 'Nurse gender', value: patient.doctorGenderPref || 'No preference' },
-        ...(patient.preferredLanguage ? [{ label: 'Language', value: patient.preferredLanguage }] : []),
-        { label: 'Pain tolerance', value: patient.painTolerance || 'Moderate' },
-        { label: 'Emotional support', value: patient.emotionalSupport || 'Sometimes' },
-        ...(patient.physicalContactOk ? [{ label: 'Physical contact', value: patient.physicalContactOk }] : []),
+        { label: t('detail.nurseGender'), value: patient.doctorGenderPref || t('detail.noPreference') },
+        ...(patient.preferredLanguage ? [{ label: t('detail.language'), value: patient.preferredLanguage }] : []),
+        { label: t('detail.painTolerance'), value: patient.painTolerance || t('detail.moderate') },
+        { label: t('detail.emotionalSupport'), value: patient.emotionalSupport || t('detail.sometimes') },
+        ...(patient.physicalContactOk ? [{ label: t('detail.physicalContact'), value: patient.physicalContactOk }] : []),
       ],
     },
     {
       icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>,
-      title: 'Health & Safety',
+      title: t('detail.healthSafety'),
       items: [
-        { label: 'Fear of needles', value: patient.fearOfNeedles === 'Yes' ? 'Yes' : 'No' },
-        ...(patient.knownAllergies ? [{ label: 'Allergies', value: patient.knownAllergies }] : [{ label: 'Allergies', value: 'None known' }]),
+        { label: t('detail.fearOfNeedles'), value: patient.fearOfNeedles === 'Yes' ? 'Yes' : 'No' },
+        ...(patient.knownAllergies ? [{ label: t('detail.allergies'), value: patient.knownAllergies }] : [{ label: t('detail.allergies'), value: t('detail.noneKnown') }]),
       ],
     },
   ];
@@ -364,7 +366,7 @@ export default function PatientDetail({
                     {patient.medicalId || ''}
                   </span>
                   <span className="text-border">|</span>
-                  <span className="text-sm text-muted-foreground">Room {patient.roomNumber}</span>
+                  <span className="text-sm text-muted-foreground">{t('detail.room')} {patient.roomNumber}</span>
                   <span
                     className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-white"
                     style={{ background: color }}
@@ -378,11 +380,11 @@ export default function PatientDetail({
           <div className="flex gap-2 shrink-0">
             {canEdit && (
               <button type="button" onClick={() => onEdited?.('edit')} className="btn-primary text-sm px-3 py-1.5 flex items-center gap-1.5">
-                <PenIcon /> Edit
+                <PenIcon /> {t('detail.edit')}
               </button>
             )}
             <button type="button" onClick={() => setShowQr(true)} className="btn-secondary text-sm px-3 py-1.5 flex items-center gap-1.5">
-              <QrIcon /> QR
+              <QrIcon /> {t('detail.qr')}
             </button>
           </div>
         </div>
@@ -397,7 +399,7 @@ export default function PatientDetail({
                     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                   </svg>
                 </div>
-                <h4 className="font-semibold text-card-foreground">Care Profile</h4>
+                <h4 className="font-semibold text-card-foreground">{t('detail.careProfile')}</h4>
               </div>
               {/* TTS Read Aloud button */}
               <button
@@ -411,20 +413,20 @@ export default function PatientDetail({
                       ? 'bg-primary/10 text-primary animate-pulse cursor-wait'
                       : 'bg-primary/10 text-primary hover:bg-primary/20 ring-1 ring-primary/15'
                 }`}
-                title={ttsState === 'playing' ? 'Stop reading' : 'Read care profile aloud'}
+                title={ttsState === 'playing' ? t('detail.stopReading') : t('detail.readCareProfileAloud')}
               >
                 {ttsState === 'playing' ? (
-                  <><StopCircleIcon /> Stop</>
+                  <><StopCircleIcon /> {t('detail.stop')}</>
                 ) : ttsState === 'loading' ? (
                   <>
                     <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    Loading...
+                    {t('detail.ttsLoading')}
                   </>
                 ) : (
-                  <><SpeakerIcon /> Read aloud</>
+                  <><SpeakerIcon /> {t('detail.readAloud')}</>
                 )}
               </button>
             </div>
@@ -448,15 +450,15 @@ export default function PatientDetail({
             </div>
             {patient.additionalNotes && (
               <div className="mt-3 p-4 bg-accent/50 rounded-xl border border-primary/10">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Additional Notes</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{t('detail.additionalNotes')}</p>
                 <p className="text-sm text-card-foreground/80 whitespace-pre-wrap">{patient.additionalNotes}</p>
               </div>
             )}
           </div>
         ) : (
           <div className="mb-6 p-5 bg-muted/40 rounded-2xl border border-dashed border-border text-center">
-            <p className="text-sm text-muted-foreground font-medium">No care profile yet</p>
-            <p className="text-xs text-muted-foreground/60 mt-0.5">Complete the questionnaire (Edit) to generate it.</p>
+            <p className="text-sm text-muted-foreground font-medium">{t('detail.noCareProfileYet')}</p>
+            <p className="text-xs text-muted-foreground/60 mt-0.5">{t('detail.completeQuestionnaire')}</p>
           </div>
         )}
 
@@ -464,7 +466,7 @@ export default function PatientDetail({
         {patient.clinicalNotes?.length > 0 && (
           <div className="mb-6">
             <h4 className="font-semibold text-card-foreground mb-2 flex items-center gap-2 text-sm">
-              <ClipboardIcon /> Clinical Notes
+              <ClipboardIcon /> {t('detail.clinicalNotes')}
             </h4>
             <div className="space-y-2">
               {patient.clinicalNotes.map((n: any, i: number) => (
@@ -483,7 +485,7 @@ export default function PatientDetail({
         {/* Doctor: Add Note */}
         {isDoctor && (
           <div className="mb-6">
-            <label className="label-field">Add clinical note</label>
+            <label className="label-field">{t('detail.addClinicalNote')}</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -491,7 +493,7 @@ export default function PatientDetail({
                 onChange={(e) => setNewNote(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
                 className="input-field flex-1"
-                placeholder="Observation..."
+                placeholder={t('detail.observationPlaceholder')}
               />
               <button
                 type="button"
@@ -499,7 +501,7 @@ export default function PatientDetail({
                 disabled={addingNote || !newNote.trim()}
                 className="btn-primary text-sm"
               >
-                Add
+                {t('detail.add')}
               </button>
             </div>
           </div>
@@ -509,11 +511,11 @@ export default function PatientDetail({
         {canEdit && (
           <div className="mb-6 flex flex-wrap gap-2">
             <button type="button" onClick={() => onTransfer?.(patient)} className="btn-warning-outline flex items-center gap-1.5">
-              <ArrowRightIcon /> Transfer to other service
+              <ArrowRightIcon /> {t('detail.transferToOther')}
             </button>
             {patient.status !== 'Active' && onReactivate && (
               <button type="button" onClick={() => onReactivate(patient)} className="btn-success text-sm px-3 py-1.5">
-                Reactivate (returning patient)
+                {t('detail.reactivate')}
               </button>
             )}
           </div>
@@ -522,16 +524,16 @@ export default function PatientDetail({
         {/* Audit Trail */}
         <div className="border-t border-border pt-5">
           <h4 className="font-semibold text-card-foreground mb-3 flex items-center gap-2 text-sm">
-            <HistoryIcon /> Last 5 changes (Audit trail)
+            <HistoryIcon /> {t('detail.auditTrail')}
           </h4>
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/50">
-                  <th className="text-left text-xs text-muted-foreground py-2.5 px-3 font-semibold uppercase tracking-wider">Date</th>
-                  <th className="text-left text-xs text-muted-foreground py-2.5 px-3 font-semibold uppercase tracking-wider">By</th>
-                  <th className="text-left text-xs text-muted-foreground py-2.5 px-3 font-semibold uppercase tracking-wider">Action</th>
-                  <th className="text-left text-xs text-muted-foreground py-2.5 px-3 font-semibold uppercase tracking-wider">Details</th>
+                  <th className="text-left text-xs text-muted-foreground py-2.5 px-3 font-semibold uppercase tracking-wider">{t('detail.date')}</th>
+                  <th className="text-left text-xs text-muted-foreground py-2.5 px-3 font-semibold uppercase tracking-wider">{t('detail.by')}</th>
+                  <th className="text-left text-xs text-muted-foreground py-2.5 px-3 font-semibold uppercase tracking-wider">{t('detail.action')}</th>
+                  <th className="text-left text-xs text-muted-foreground py-2.5 px-3 font-semibold uppercase tracking-wider">{t('detail.details')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -548,7 +550,7 @@ export default function PatientDetail({
                     ))
                   : (
                       <tr>
-                        <td colSpan={4} className="text-muted-foreground py-6 text-center text-sm">No history</td>
+                        <td colSpan={4} className="text-muted-foreground py-6 text-center text-sm">{t('detail.noHistory')}</td>
                       </tr>
                     )}
               </tbody>
@@ -565,8 +567,8 @@ export default function PatientDetail({
               <QrIcon />
             </div>
             <h3 className="text-xl font-bold text-card-foreground mb-0.5">{patient.fullName}</h3>
-            <p className="text-sm text-muted-foreground mb-1">Room {patient.roomNumber} · {patient.medicalId || '\u2014'}</p>
-            <p className="text-xs text-muted-foreground/60 mb-6">Scan to view patient info and care profile</p>
+            <p className="text-sm text-muted-foreground mb-1">{t('detail.room')} {patient.roomNumber} · {patient.medicalId || '\u2014'}</p>
+            <p className="text-xs text-muted-foreground/60 mb-6">{t('detail.scanDescription')}</p>
             <div className="p-5 bg-white rounded-2xl shadow-card border border-border">
               <QRCodeSVG
                 value={qrData}
@@ -582,7 +584,7 @@ export default function PatientDetail({
               <span>{serviceName}</span>
             </div>
             <button type="button" onClick={() => setShowQr(false)} className="mt-6 btn-primary px-8">
-              Close
+              {t('detail.close')}
             </button>
           </div>
         </Modal>

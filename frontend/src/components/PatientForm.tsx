@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useT } from '../i18n';
 
 const emptyPatient = {
   fullName: '', age: '', gender: 'Male', medicalId: '', roomNumber: '',
@@ -48,6 +49,7 @@ const SettingsIcon = () => (
 export default function PatientForm({
   patient, services, defaultServiceId, onSave, onClose, saving, savingLabel, basicOnly, initialMedicalId,
 }: PatientFormProps) {
+  const { t } = useT();
   const [form, setForm] = useState<Record<string, any>>(emptyPatient);
 
   useEffect(() => {
@@ -106,10 +108,10 @@ export default function PatientForm({
   return (
     <form onSubmit={handleSubmit} className="p-6 max-h-[90vh] overflow-y-auto">
       <h3 className="text-xl font-bold text-card-foreground mb-1">
-        {showBasicOnly ? 'Register patient (basic info)' : patient ? 'Edit Patient' : 'Register New Patient'}
+        {showBasicOnly ? t('form.registerBasicTitle') : patient ? t('form.editTitle') : t('form.registerTitle')}
       </h3>
       {showBasicOnly && (
-        <p className="text-sm text-muted-foreground mb-4">Fill this before going to the patient. At the bedside, open this patient and complete the questionnaire.</p>
+        <p className="text-sm text-muted-foreground mb-4">{t('form.basicOnlyDesc')}</p>
       )}
 
       <div className="space-y-6 mt-4">
@@ -117,57 +119,57 @@ export default function PatientForm({
         <div>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary"><UserIcon /></div>
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Basic Information</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('form.basicInfo')}</h4>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className={showBasicOnly ? 'col-span-2 order-first' : 'col-span-2'}>
-              <label className="label-field">Medical ID *</label>
+              <label className="label-field">{t('form.medicalId')}</label>
               <input type="text" required value={form.medicalId}
                 onChange={(e) => setForm((f) => ({ ...f, medicalId: e.target.value }))}
-                className="input-field font-mono" placeholder="Unique identifier"
+                className="input-field font-mono" placeholder={t('form.medicalIdPlaceholder')}
                 readOnly={!!initialMedicalId || !!patient} />
             </div>
             <div className="col-span-2">
-              <label className="label-field">Full Name *</label>
+              <label className="label-field">{t('form.fullName')}</label>
               <input type="text" required value={form.fullName}
                 onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
                 className="input-field" />
             </div>
             <div>
-              <label className="label-field">Age *</label>
+              <label className="label-field">{t('form.age')}</label>
               <input type="number" required min={1} value={form.age}
                 onChange={(e) => setForm((f) => ({ ...f, age: e.target.value }))}
                 className="input-field" />
             </div>
             <div>
-              <label className="label-field">Gender</label>
+              <label className="label-field">{t('form.gender')}</label>
               <select value={form.gender}
                 onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
                 className="select-field">
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+                <option value="Male">{t('form.genderMale')}</option>
+                <option value="Female">{t('form.genderFemale')}</option>
+                <option value="Other">{t('form.genderOther')}</option>
               </select>
             </div>
             <div>
-              <label className="label-field">Room Number *</label>
+              <label className="label-field">{t('form.roomNumber')}</label>
               <input type="text" required value={form.roomNumber}
                 onChange={(e) => setForm((f) => ({ ...f, roomNumber: e.target.value }))}
                 className="input-field" />
             </div>
             {!showBasicOnly && (
               <div>
-                <label className="label-field">Status</label>
+                <label className="label-field">{t('form.status')}</label>
                 <select value={form.status}
                   onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
                   className="select-field">
-                  <option value="Active">Active</option>
-                  <option value="Discharged">Left hospital</option>
+                  <option value="Active">{t('form.statusActive')}</option>
+                  <option value="Discharged">{t('form.statusDischarged')}</option>
                 </select>
               </div>
             )}
             <div className="col-span-2">
-              <label className="label-field">Service</label>
+              <label className="label-field">{t('form.service')}</label>
               <select value={form.serviceId}
                 onChange={(e) => setForm((f) => ({ ...f, serviceId: e.target.value }))}
                 className="select-field">
@@ -184,80 +186,75 @@ export default function PatientForm({
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-6 h-6 rounded-md bg-accent-foreground/10 flex items-center justify-center text-accent-foreground"><SettingsIcon /></div>
-              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Preferences & Care Profile</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('form.preferences')}</h4>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label-field">Room temperature</label>
+                <label className="label-field">{t('form.roomTemperature')}</label>
                 <select value={form.tempPreference}
                   onChange={(e) => setForm((f) => ({ ...f, tempPreference: e.target.value }))}
                   className="select-field">
-                  <option value="Cool">Cool</option>
-                  <option value="Moderate">Moderate</option>
-                  <option value="Warm">Warm</option>
+                  <option value="Cool">{t('form.tempCool')}</option>
+                  <option value="Moderate">{t('form.tempModerate')}</option>
+                  <option value="Warm">{t('form.tempWarm')}</option>
                 </select>
               </div>
               <div>
-                <label className="label-field">Noise level</label>
+                <label className="label-field">{t('form.noiseLevel')}</label>
                 <select value={form.noisePreference}
                   onChange={(e) => setForm((f) => ({ ...f, noisePreference: e.target.value }))}
                   className="select-field">
-                  <option value="Quiet">Quiet</option>
-                  <option value="Moderate">Moderate</option>
-                  <option value="Active">Active</option>
+                  <option value="Quiet">{t('form.noiseQuiet')}</option>
+                  <option value="Moderate">{t('form.noiseModerate')}</option>
+                  <option value="Active">{t('form.noiseActive')}</option>
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="label-field">Dietary preferences / allergies</label>
+                <label className="label-field">{t('form.dietaryLabel')}</label>
                 <textarea rows={2} value={form.dietary}
                   onChange={(e) => setForm((f) => ({ ...f, dietary: e.target.value }))}
-                  className="input-field" placeholder="e.g. Vegetarian, no gluten..." />
+                  className="input-field" placeholder={t('form.dietaryPlaceholder')} />
               </div>
-              <div className="col-span-2">
-                <label className="label-field">Sleep schedule</label>
-                <input type="text" value={form.sleepSchedule}
-                  onChange={(e) => setForm((f) => ({ ...f, sleepSchedule: e.target.value }))}
-                  className="input-field" placeholder="e.g. 22:00 - 06:00" />
-              </div>
+
               <div>
-                <label className="label-field">Communication style</label>
+                <label className="label-field">{t('form.communicationStyle')}</label>
                 <select value={form.communicationStyle}
                   onChange={(e) => setForm((f) => ({ ...f, communicationStyle: e.target.value }))}
                   className="select-field">
-                  <option value="Detailed">Detailed</option>
-                  <option value="Simple">Simple</option>
-                  <option value="Visual">Visual</option>
+                  <option value="Detailed">{t('form.commDetailed')}</option>
+                  <option value="Simple">{t('form.commSimple')}</option>
+                  <option value="Visual">{t('form.commVisual')}</option>
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="label-field">Religious / Cultural beliefs</label>
+                <label className="label-field">{t('form.beliefs')}</label>
                 <textarea rows={2} value={form.beliefs}
                   onChange={(e) => setForm((f) => ({ ...f, beliefs: e.target.value }))}
-                  className="input-field" placeholder="Any beliefs to be aware of..." />
+                  className="input-field" placeholder={t('form.beliefsPlaceholder')} />
               </div>
               <div className="col-span-2">
-                <label className="label-field">Hobbies & interests</label>
+                <label className="label-field">{t('form.hobbies')}</label>
                 <textarea rows={2} value={form.hobbies}
                   onChange={(e) => setForm((f) => ({ ...f, hobbies: e.target.value }))}
-                  className="input-field" placeholder="Activities the patient enjoys..." />
+                  className="input-field" placeholder={t('form.hobbiesPlaceholder')} />
               </div>
               <div className="col-span-2">
-                <label className="label-field">Dislikes & triggers</label>
+                <label className="label-field">{t('form.dislikes')}</label>
                 <textarea rows={2} value={form.dislikes}
                   onChange={(e) => setForm((f) => ({ ...f, dislikes: e.target.value }))}
-                  className="input-field" placeholder="Things to avoid..." />
+                  className="input-field" placeholder={t('form.dislikesPlaceholder')} />
               </div>
               <div className="col-span-2">
-                <label className="label-field">Family visitation preferences</label>
+                <label className="label-field">{t('form.visitation')}</label>
                 <textarea rows={2} value={form.visitation}
                   onChange={(e) => setForm((f) => ({ ...f, visitation: e.target.value }))}
-                  className="input-field" placeholder="Preferred visiting times..." />
+                  className="input-field" placeholder={t('form.visitationPlaceholder')} />
               </div>
               <div className="col-span-2">
-                <label className="label-field">Additional notes</label>
+                <label className="label-field">{t('form.additionalNotes')}</label>
                 <textarea rows={2} value={form.additionalNotes}
                   onChange={(e) => setForm((f) => ({ ...f, additionalNotes: e.target.value }))}
-                  className="input-field" placeholder="Anything else staff should know..." />
+                  className="input-field" placeholder={t('form.additionalNotesPlaceholder')} />
               </div>
             </div>
           </div>
@@ -268,50 +265,50 @@ export default function PatientForm({
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-6 h-6 rounded-md bg-info/10 flex items-center justify-center text-info"><HeartHandIcon /></div>
-              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Care Preferences</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('form.carePrefs')}</h4>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label-field">Nurse gender preference</label>
+                <label className="label-field">{t('form.nurseGenderPref')}</label>
                 <select value={form.doctorGenderPref}
                   onChange={(e) => setForm((f) => ({ ...f, doctorGenderPref: e.target.value }))}
                   className="select-field">
-                  <option value="No preference">No preference</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
+                  <option value="No preference">{t('form.noPreference')}</option>
+                  <option value="Male">{t('form.genderMale')}</option>
+                  <option value="Female">{t('form.genderFemale')}</option>
                 </select>
               </div>
               <div>
-                <label className="label-field">Preferred language</label>
+                <label className="label-field">{t('form.preferredLanguage')}</label>
                 <input type="text" value={form.preferredLanguage}
                   onChange={(e) => setForm((f) => ({ ...f, preferredLanguage: e.target.value }))}
-                  className="input-field" placeholder="e.g. French, Arabic..." />
+                  className="input-field" placeholder={t('form.preferredLanguagePlaceholder')} />
               </div>
               <div>
-                <label className="label-field">Pain tolerance</label>
+                <label className="label-field">{t('form.painTolerance')}</label>
                 <select value={form.painTolerance}
                   onChange={(e) => setForm((f) => ({ ...f, painTolerance: e.target.value }))}
                   className="select-field">
-                  <option value="Low">Low</option>
-                  <option value="Moderate">Moderate</option>
-                  <option value="High">High</option>
+                  <option value="Low">{t('form.painLow')}</option>
+                  <option value="Moderate">{t('form.painModerate')}</option>
+                  <option value="High">{t('form.painHigh')}</option>
                 </select>
               </div>
               <div>
-                <label className="label-field">Emotional support needed</label>
+                <label className="label-field">{t('form.emotionalSupport')}</label>
                 <select value={form.emotionalSupport}
                   onChange={(e) => setForm((f) => ({ ...f, emotionalSupport: e.target.value }))}
                   className="select-field">
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                  <option value="Sometimes">Sometimes</option>
+                  <option value="Yes">{t('form.emotionalYes')}</option>
+                  <option value="No">{t('form.emotionalNo')}</option>
+                  <option value="Sometimes">{t('form.emotionalSometimes')}</option>
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="label-field">Acceptable physical contact</label>
+                <label className="label-field">{t('form.physicalContact')}</label>
                 <input type="text" value={form.physicalContactOk}
                   onChange={(e) => setForm((f) => ({ ...f, physicalContactOk: e.target.value }))}
-                  className="input-field" placeholder="e.g. Handshake OK, avoid shoulder touch..." />
+                  className="input-field" placeholder={t('form.physicalContactPlaceholder')} />
               </div>
             </div>
           </div>
@@ -322,23 +319,23 @@ export default function PatientForm({
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-6 h-6 rounded-md bg-destructive/10 flex items-center justify-center text-destructive"><ShieldAlertIcon /></div>
-              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Health & Safety</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('form.healthSafety')}</h4>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label-field">Fear of needles</label>
+                <label className="label-field">{t('form.fearOfNeedles')}</label>
                 <select value={form.fearOfNeedles}
                   onChange={(e) => setForm((f) => ({ ...f, fearOfNeedles: e.target.value }))}
                   className="select-field">
-                  <option value="No">No</option>
-                  <option value="Yes">Yes</option>
+                  <option value="No">{t('form.fearNo')}</option>
+                  <option value="Yes">{t('form.fearYes')}</option>
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="label-field">Known allergies (non-dietary)</label>
+                <label className="label-field">{t('form.knownAllergies')}</label>
                 <textarea rows={2} value={form.knownAllergies}
                   onChange={(e) => setForm((f) => ({ ...f, knownAllergies: e.target.value }))}
-                  className="input-field" placeholder="e.g. Latex, Penicillin, Ibuprofen..." />
+                  className="input-field" placeholder={t('form.knownAllergiesPlaceholder')} />
               </div>
             </div>
           </div>
@@ -346,7 +343,7 @@ export default function PatientForm({
 
         {/* ── Actions ── */}
         <div className="flex justify-end gap-3 pt-2 border-t border-border">
-          <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+          <button type="button" onClick={onClose} className="btn-secondary">{t('form.cancel')}</button>
           <button type="submit" disabled={saving} className="btn-primary">
             {saving ? (
               <span className="flex items-center gap-2">
@@ -354,9 +351,9 @@ export default function PatientForm({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                {savingLabel || 'Saving...'}
+                {savingLabel || t('form.saving')}
               </span>
-            ) : patient ? 'Save Changes' : showBasicOnly ? 'Register patient' : 'Save & generate care profile'}
+            ) : patient ? t('form.saveChanges') : showBasicOnly ? t('form.registerPatient') : t('form.saveAndGenerate')}
           </button>
         </div>
       </div>

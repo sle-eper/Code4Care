@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useT } from '../i18n';
 
 interface LoginProps {
   onLogin: (username: string, password: string) => void;
@@ -29,6 +30,7 @@ const LockIcon = () => (
 );
 
 export default function Login({ onLogin, loading, error }: LoginProps) {
+  const { t, dir } = useT();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -38,7 +40,7 @@ export default function Login({ onLogin, loading, error }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen gradient-login-bg flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen gradient-login-bg flex items-center justify-center p-4 relative overflow-hidden" dir={dir}>
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-soft" />
@@ -52,11 +54,11 @@ export default function Login({ onLogin, loading, error }: LoginProps) {
         {/* Logo area */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white backdrop-blur-md mb-4 ring-1 ring-white/20 overflow-hidden shadow-lg">
-            <img src="/care-id-icon.png" alt="CARE-ID" className="h-20 w-20 object-cover" />
+            <img src="/care-id-icon.png" alt={t('login.logoAlt')} className="h-20 w-20 object-cover" />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight mb-1">CARE-ID</h1>
           <p className="text-sm text-white/50 font-medium tracking-wide">
-            Patient Preference & Priority Engine
+            {t('login.subtitle')}
           </p>
         </div>
 
@@ -64,7 +66,7 @@ export default function Login({ onLogin, loading, error }: LoginProps) {
         <div className="bg-white/[0.07] backdrop-blur-xl rounded-3xl p-8 sm:p-10 ring-1 ring-white/10 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-1.5">Username</label>
+              <label className="block text-sm font-medium text-white/60 mb-1.5">{t('login.username')}</label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2">
                   <UserIcon />
@@ -77,12 +79,12 @@ export default function Login({ onLogin, loading, error }: LoginProps) {
                   className="w-full pl-11 pr-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white
                     placeholder:text-white/25 focus:ring-2 focus:ring-primary/40 focus:border-primary/50
                     focus:outline-none transition-all duration-200"
-                  placeholder="Enter your username"
+                  placeholder={t('login.usernamePlaceholder')}
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-white/60 mb-1.5">{t('login.password')}</label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2">
                   <LockIcon />
@@ -95,7 +97,7 @@ export default function Login({ onLogin, loading, error }: LoginProps) {
                   className="w-full pl-11 pr-4 py-3 bg-white/[0.06] border border-white/10 rounded-xl text-white
                     placeholder:text-white/25 focus:ring-2 focus:ring-primary/40 focus:border-primary/50
                     focus:outline-none transition-all duration-200"
-                  placeholder="Enter your password"
+                  placeholder={t('login.passwordPlaceholder')}
                 />
               </div>
             </div>
@@ -120,16 +122,16 @@ export default function Login({ onLogin, loading, error }: LoginProps) {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Signing in...
+                  {t('login.signingIn')}
                 </span>
               ) : (
-                'Sign In'
+                t('login.signIn')
               )}
             </button>
           </form>
 
           <p className="text-xs text-white/30 text-center mt-6 font-medium">
-            Secure staff authentication
+            {t('login.footer')}
           </p>
         </div>
       </div>

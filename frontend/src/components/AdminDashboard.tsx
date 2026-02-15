@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../api';
 import Modal from './Modal';
+import { useT } from '../i18n';
 
 /* ── SVG Icons ── */
 const UsersIcon = () => (
@@ -46,6 +47,7 @@ const TrashIcon = () => (
 );
 
 export default function AdminDashboard() {
+  const { t } = useT();
   const [services, setServices] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalPatients: 0, activePatients: 0 });
@@ -82,7 +84,7 @@ export default function AdminDashboard() {
   };
 
   const removeService = async (id: number) => {
-    if (!confirm('Remove this service?')) return;
+    if (!confirm(t('admin.confirmRemoveService'))) return;
     try { await api.services.delete(id); load(); } catch (e: any) { alert(e.message); }
   };
 
@@ -98,7 +100,7 @@ export default function AdminDashboard() {
 
   const saveStaff = async () => {
     if (!modal?.name?.trim() || !modal?.username?.trim()) return;
-    if (!modal.id && !modal?.password) { alert('Password is required for new staff.'); return; }
+    if (!modal.id && !modal?.password) { alert(t('admin.passwordRequired')); return; }
     try {
       if (modal.id) {
         await api.staff.update(modal.id, {
@@ -119,7 +121,7 @@ export default function AdminDashboard() {
   };
 
   const removeStaff = async (id: number) => {
-    if (!confirm('Remove this staff member?')) return;
+    if (!confirm(t('admin.confirmRemoveStaff'))) return;
     try { await api.staff.delete(id); load(); } catch (e: any) { alert(e.message); }
   };
 
@@ -130,16 +132,16 @@ export default function AdminDashboard() {
   );
 
   const statCards = [
-    { label: 'Total Patients', value: stats.totalPatients ?? 0, icon: <UsersIcon />, bgColor: 'bg-primary/10', textColor: 'text-primary' },
-    { label: 'Active Patients', value: stats.activePatients ?? 0, icon: <HeartIcon />, bgColor: 'bg-success/10', textColor: 'text-success' },
-    { label: 'Staff Members', value: staff.length, icon: <StethIcon />, bgColor: 'bg-info/10', textColor: 'text-info' },
-    { label: 'Services', value: services.length, icon: <BuildingIcon />, bgColor: 'bg-accent-foreground/10', textColor: 'text-accent-foreground' },
+    { label: t('admin.totalPatients'), value: stats.totalPatients ?? 0, icon: <UsersIcon />, bgColor: 'bg-primary/10', textColor: 'text-primary' },
+    { label: t('admin.activePatients'), value: stats.activePatients ?? 0, icon: <HeartIcon />, bgColor: 'bg-success/10', textColor: 'text-success' },
+    { label: t('admin.staff'), value: staff.length, icon: <StethIcon />, bgColor: 'bg-info/10', textColor: 'text-info' },
+    { label: t('admin.services'), value: services.length, icon: <BuildingIcon />, bgColor: 'bg-accent-foreground/10', textColor: 'text-accent-foreground' },
   ];
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Admin Dashboard</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t('admin.title')}</h2>
         <p className="text-sm text-muted-foreground mt-0.5">Manage services, staff and view system statistics</p>
       </div>
 
@@ -167,10 +169,10 @@ export default function AdminDashboard() {
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><BuildingIcon /></div>
-              <h3 className="font-semibold text-card-foreground">Services</h3>
+              <h3 className="font-semibold text-card-foreground">{t('admin.servicesHeading')}</h3>
             </div>
             <button type="button" onClick={addService} className="btn-primary text-sm px-3 py-1.5 flex items-center gap-1.5">
-              <PlusIcon /> Add
+              <PlusIcon /> {t('admin.addService')}
             </button>
           </div>
           <ul className="divide-y divide-border p-1.5 max-h-72 overflow-y-auto">
@@ -182,7 +184,7 @@ export default function AdminDashboard() {
                 </span>
                 <button type="button" onClick={() => removeService(s.id)}
                   className="text-destructive/70 hover:text-destructive text-xs font-medium transition-colors flex items-center gap-1">
-                  <TrashIcon /> Remove
+                  <TrashIcon /> {t('admin.remove')}
                 </button>
               </li>
             ))}
@@ -197,10 +199,10 @@ export default function AdminDashboard() {
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-info/10 flex items-center justify-center text-info"><StethIcon /></div>
-              <h3 className="font-semibold text-card-foreground">Staff</h3>
+              <h3 className="font-semibold text-card-foreground">{t('admin.staffHeading')}</h3>
             </div>
             <button type="button" onClick={addStaff} className="btn-primary text-sm px-3 py-1.5 flex items-center gap-1.5">
-              <PlusIcon /> Register
+              <PlusIcon /> {t('admin.registerStaff')}
             </button>
           </div>
           <ul className="divide-y divide-border p-1.5 max-h-72 overflow-y-auto">
@@ -222,7 +224,7 @@ export default function AdminDashboard() {
                   <span className="flex gap-2 shrink-0 ml-2">
                     <button type="button" onClick={() => editStaff(s)}
                       className="text-primary/70 hover:text-primary text-xs font-medium transition-colors flex items-center gap-1">
-                      <PenIcon /> Edit
+                      <PenIcon /> {t('admin.edit')}
                     </button>
                     <button type="button" onClick={() => removeStaff(s.id)}
                       className="text-destructive/70 hover:text-destructive text-xs font-medium transition-colors flex items-center gap-1">
@@ -243,16 +245,16 @@ export default function AdminDashboard() {
       {modal?.type === 'service' && (
         <Modal onClose={() => setModal(null)}>
           <div className="p-6">
-            <h3 className="text-xl font-bold text-card-foreground mb-5">Add Service</h3>
+            <h3 className="text-xl font-bold text-card-foreground mb-5">{t('admin.addServiceTitle')}</h3>
             <div className="space-y-4">
               <div>
-                <label className="label-field">Name</label>
+                <label className="label-field">{t('admin.serviceName')}</label>
                 <input type="text" value={modal.name}
                   onChange={(e) => setModal((m: any) => ({ ...m, name: e.target.value }))}
-                  className="input-field" placeholder="e.g. Neurologie" autoFocus />
+                  className="input-field" placeholder={t('admin.serviceNamePlaceholder')} autoFocus />
               </div>
               <div>
-                <label className="label-field">Color</label>
+                <label className="label-field">{t('admin.serviceColor')}</label>
                 <div className="flex items-center gap-3">
                   <input type="color" value={modal.color}
                     onChange={(e) => setModal((m: any) => ({ ...m, color: e.target.value }))}
@@ -261,8 +263,8 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setModal(null)} className="btn-secondary">Cancel</button>
-                <button type="button" onClick={saveService} className="btn-primary">Save Service</button>
+                <button type="button" onClick={() => setModal(null)} className="btn-secondary">{t('admin.cancel')}</button>
+                <button type="button" onClick={saveService} className="btn-primary">{t('admin.save')}</button>
               </div>
             </div>
           </div>
@@ -273,43 +275,43 @@ export default function AdminDashboard() {
       {modal?.type === 'staff' && (
         <Modal onClose={() => setModal(null)}>
           <div className="p-6">
-            <h3 className="text-xl font-bold text-card-foreground mb-5">{modal.id ? 'Edit Staff' : 'Register Staff'}</h3>
+            <h3 className="text-xl font-bold text-card-foreground mb-5">{modal.id ? t('admin.editStaffTitle') : t('admin.registerStaffTitle')}</h3>
             <div className="space-y-4">
               <div>
-                <label className="label-field">Full Name</label>
+                <label className="label-field">{t('admin.fullName')}</label>
                 <input type="text" value={modal.name}
                   onChange={(e) => setModal((m: any) => ({ ...m, name: e.target.value }))}
                   className="input-field" autoFocus />
               </div>
               <div>
-                <label className="label-field">Username</label>
+                <label className="label-field">{t('admin.username')}</label>
                 <input type="text" value={modal.username}
                   onChange={(e) => setModal((m: any) => ({ ...m, username: e.target.value }))}
                   className="input-field" />
               </div>
               <div>
-                <label className="label-field">Password {modal.id && <span className="text-muted-foreground font-normal">(leave blank to keep current)</span>}</label>
+                <label className="label-field">{t('admin.password')} {modal.id && <span className="text-muted-foreground font-normal">{t('admin.passwordKeep')}</span>}</label>
                 <input type="password" value={modal.password}
                   onChange={(e) => setModal((m: any) => ({ ...m, password: e.target.value }))}
                   className="input-field" placeholder={modal.id ? '••••••••' : ''} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="label-field">Role</label>
+                  <label className="label-field">{t('admin.role')}</label>
                   <select value={modal.role}
                     onChange={(e) => setModal((m: any) => ({ ...m, role: e.target.value }))}
                     className="select-field">
-                    <option value="nurse">Nurse</option>
-                    <option value="doctor">Doctor</option>
-                    {modal.id && modal.role === 'admin' && <option value="admin">Admin</option>}
+                    <option value="nurse">{t('admin.roleNurse')}</option>
+                    <option value="doctor">{t('admin.roleDoctor')}</option>
+                    {modal.id && modal.role === 'admin' && <option value="admin">{t('admin.roleAdmin')}</option>}
                   </select>
                 </div>
                 <div>
-                  <label className="label-field">Service</label>
+                  <label className="label-field">{t('admin.service')}</label>
                   <select value={modal.serviceId}
                     onChange={(e) => setModal((m: any) => ({ ...m, serviceId: e.target.value }))}
                     className="select-field">
-                    <option value="">—</option>
+                    <option value="">{t('admin.servicePlaceholder')}</option>
                     {services.map((s) => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
@@ -317,9 +319,9 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setModal(null)} className="btn-secondary">Cancel</button>
+                <button type="button" onClick={() => setModal(null)} className="btn-secondary">{t('admin.cancel')}</button>
                 <button type="button" onClick={saveStaff} className="btn-primary">
-                  {modal.id ? 'Save Changes' : 'Register'}
+                  {modal.id ? t('admin.save') : t('admin.register')}
                 </button>
               </div>
             </div>
