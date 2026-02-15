@@ -19,6 +19,19 @@ interface PatientFormProps {
   initialMedicalId?: string;
 }
 
+/* ── SVG Icons ── */
+const UserIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+  </svg>
+);
+const SettingsIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
 export default function PatientForm({
   patient, services, defaultServiceId, onSave, onClose, saving, savingLabel, basicOnly, initialMedicalId,
 }: PatientFormProps) {
@@ -65,23 +78,26 @@ export default function PatientForm({
 
   return (
     <form onSubmit={handleSubmit} className="p-6 max-h-[90vh] overflow-y-auto">
-      <h3 className="text-xl font-bold text-card-foreground mb-2">
+      <h3 className="text-xl font-bold text-card-foreground mb-1">
         {showBasicOnly ? 'Register patient (basic info)' : patient ? 'Edit Patient' : 'Register New Patient'}
       </h3>
       {showBasicOnly && (
         <p className="text-sm text-muted-foreground mb-4">Fill this before going to the patient. At the bedside, open this patient and complete the questionnaire.</p>
       )}
 
-      <div className="space-y-6">
-        {/* Basic Information */}
-        <div className="border-b border-border pb-5">
-          <h4 className="font-semibold text-card-foreground mb-3 text-sm uppercase tracking-wider text-muted-foreground">Basic Information</h4>
+      <div className="space-y-6 mt-4">
+        {/* ── Basic Information ── */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary"><UserIcon /></div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Basic Information</h4>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className={showBasicOnly ? 'col-span-2 order-first' : 'col-span-2'}>
-              <label className="label-field">Medical ID * (unique)</label>
+              <label className="label-field">Medical ID *</label>
               <input type="text" required value={form.medicalId}
                 onChange={(e) => setForm((f) => ({ ...f, medicalId: e.target.value }))}
-                className="input-field" placeholder="Unique identifier"
+                className="input-field font-mono" placeholder="Unique identifier"
                 readOnly={!!initialMedicalId || !!patient} />
             </div>
             <div className="col-span-2">
@@ -136,10 +152,13 @@ export default function PatientForm({
           </div>
         </div>
 
-        {/* Preferences */}
+        {/* ── Preferences ── */}
         {!showBasicOnly && (
-          <div className="border-b border-border pb-5">
-            <h4 className="font-semibold text-card-foreground mb-3 text-sm uppercase tracking-wider text-muted-foreground">Preferences</h4>
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-md bg-accent-foreground/10 flex items-center justify-center text-accent-foreground"><SettingsIcon /></div>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Preferences & Care Profile</h4>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="label-field">Room temperature</label>
@@ -165,7 +184,7 @@ export default function PatientForm({
                 <label className="label-field">Dietary preferences / allergies</label>
                 <textarea rows={2} value={form.dietary}
                   onChange={(e) => setForm((f) => ({ ...f, dietary: e.target.value }))}
-                  className="input-field" />
+                  className="input-field" placeholder="e.g. Vegetarian, no gluten..." />
               </div>
               <div className="col-span-2">
                 <label className="label-field">Sleep schedule</label>
@@ -187,41 +206,49 @@ export default function PatientForm({
                 <label className="label-field">Religious / Cultural beliefs</label>
                 <textarea rows={2} value={form.beliefs}
                   onChange={(e) => setForm((f) => ({ ...f, beliefs: e.target.value }))}
-                  className="input-field" />
+                  className="input-field" placeholder="Any beliefs to be aware of..." />
               </div>
               <div className="col-span-2">
                 <label className="label-field">Hobbies & interests</label>
                 <textarea rows={2} value={form.hobbies}
                   onChange={(e) => setForm((f) => ({ ...f, hobbies: e.target.value }))}
-                  className="input-field" />
+                  className="input-field" placeholder="Activities the patient enjoys..." />
               </div>
               <div className="col-span-2">
                 <label className="label-field">Dislikes & triggers</label>
                 <textarea rows={2} value={form.dislikes}
                   onChange={(e) => setForm((f) => ({ ...f, dislikes: e.target.value }))}
-                  className="input-field" />
+                  className="input-field" placeholder="Things to avoid..." />
               </div>
               <div className="col-span-2">
                 <label className="label-field">Family visitation preferences</label>
                 <textarea rows={2} value={form.visitation}
                   onChange={(e) => setForm((f) => ({ ...f, visitation: e.target.value }))}
-                  className="input-field" />
+                  className="input-field" placeholder="Preferred visiting times..." />
               </div>
               <div className="col-span-2">
                 <label className="label-field">Additional notes</label>
                 <textarea rows={2} value={form.additionalNotes}
                   onChange={(e) => setForm((f) => ({ ...f, additionalNotes: e.target.value }))}
-                  className="input-field" />
+                  className="input-field" placeholder="Anything else staff should know..." />
               </div>
             </div>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex justify-end gap-3">
+        {/* ── Actions ── */}
+        <div className="flex justify-end gap-3 pt-2 border-t border-border">
           <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
           <button type="submit" disabled={saving} className="btn-primary">
-            {saving ? (savingLabel || 'Saving…') : patient ? 'Save' : showBasicOnly ? 'Register patient' : 'Save & generate care profile'}
+            {saving ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                {savingLabel || 'Saving...'}
+              </span>
+            ) : patient ? 'Save Changes' : showBasicOnly ? 'Register patient' : 'Save & generate care profile'}
           </button>
         </div>
       </div>

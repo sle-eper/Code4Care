@@ -42,13 +42,17 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header user={user} onLogout={logout} />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {user.role === 'admin' && <AdminDashboard />}
-        {user.role === 'nurse' && <NurseDashboard user={user} />}
-        {user.role === 'doctor' && <DoctorDashboard user={user} />}
-      </main>
+    <div className="min-h-screen bg-background relative">
+      {/* Subtle background pattern */}
+      <div className="fixed inset-0 dot-pattern opacity-40 pointer-events-none" />
+      <div className="relative">
+        <Header user={user} onLogout={logout} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+          {user.role === 'admin' && <AdminDashboard />}
+          {user.role === 'nurse' && <NurseDashboard user={user} />}
+          {user.role === 'doctor' && <DoctorDashboard user={user} />}
+        </main>
+      </div>
     </div>
   );
 }

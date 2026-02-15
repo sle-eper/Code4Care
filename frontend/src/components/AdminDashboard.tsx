@@ -2,6 +2,49 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../api';
 import Modal from './Modal';
 
+/* ── SVG Icons ── */
+const UsersIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+const HeartIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+  </svg>
+);
+const StethIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" />
+    <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" /><circle cx="20" cy="10" r="2" />
+  </svg>
+);
+const BuildingIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="16" height="20" x="4" y="2" rx="2" ry="2" /><path d="M9 22v-4h6v4" />
+    <path d="M8 6h.01" /><path d="M16 6h.01" /><path d="M12 6h.01" />
+    <path d="M12 10h.01" /><path d="M12 14h.01" /><path d="M16 10h.01" />
+    <path d="M16 14h.01" /><path d="M8 10h.01" /><path d="M8 14h.01" />
+  </svg>
+);
+const PlusIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+const PenIcon = () => (
+  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+  </svg>
+);
+const TrashIcon = () => (
+  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+  </svg>
+);
+
 export default function AdminDashboard() {
   const [services, setServices] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
@@ -28,7 +71,7 @@ export default function AdminDashboard() {
 
   useEffect(() => { load(); }, [load]);
 
-  const addService = () => setModal({ type: 'service', name: '', color: '#7c3aed' });
+  const addService = () => setModal({ type: 'service', name: '', color: '#0d9488' });
 
   const saveService = async () => {
     if (!modal?.name?.trim()) return;
@@ -86,24 +129,31 @@ export default function AdminDashboard() {
     </div>
   );
 
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-foreground">Admin Dashboard</h2>
+  const statCards = [
+    { label: 'Total Patients', value: stats.totalPatients ?? 0, icon: <UsersIcon />, bgColor: 'bg-primary/10', textColor: 'text-primary' },
+    { label: 'Active Patients', value: stats.activePatients ?? 0, icon: <HeartIcon />, bgColor: 'bg-success/10', textColor: 'text-success' },
+    { label: 'Staff Members', value: staff.length, icon: <StethIcon />, bgColor: 'bg-info/10', textColor: 'text-info' },
+    { label: 'Services', value: services.length, icon: <BuildingIcon />, bgColor: 'bg-accent-foreground/10', textColor: 'text-accent-foreground' },
+  ];
 
-      {/* Stats Cards */}
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-foreground">Admin Dashboard</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage services, staff and view system statistics</p>
+      </div>
+
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Patients', value: stats.totalPatients ?? 0, icon: '👥', color: 'text-primary' },
-          { label: 'Active Patients', value: stats.activePatients ?? 0, icon: '💚', color: 'text-success' },
-          { label: 'Staff', value: staff.length, icon: '🩺', color: 'text-info' },
-          { label: 'Services', value: services.length, icon: '🏥', color: 'text-accent-foreground' },
-        ].map((stat) => (
+        {statCards.map((stat) => (
           <div key={stat.label} className="bg-card rounded-2xl shadow-card border border-border p-5 card-hover">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{stat.icon}</span>
+            <div className="flex items-center gap-3.5">
+              <div className={`stat-icon ${stat.bgColor} ${stat.textColor}`}>
+                {stat.icon}
+              </div>
               <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+                <p className={`text-2xl font-bold ${stat.textColor} mt-0.5`}>{stat.value}</p>
               </div>
             </div>
           </div>
@@ -115,45 +165,76 @@ export default function AdminDashboard() {
         {/* Services */}
         <div className="bg-card rounded-2xl shadow-card border border-border overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-            <h3 className="font-semibold text-card-foreground">Services</h3>
-            <button type="button" onClick={addService} className="btn-primary text-sm px-3 py-1.5">Add Service</button>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><BuildingIcon /></div>
+              <h3 className="font-semibold text-card-foreground">Services</h3>
+            </div>
+            <button type="button" onClick={addService} className="btn-primary text-sm px-3 py-1.5 flex items-center gap-1.5">
+              <PlusIcon /> Add
+            </button>
           </div>
-          <ul className="divide-y divide-border p-2 max-h-64 overflow-y-auto">
+          <ul className="divide-y divide-border p-1.5 max-h-72 overflow-y-auto">
             {services.map((s) => (
-              <li key={s.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-muted rounded-xl transition-colors">
-                <span className="flex items-center gap-2.5">
-                  <span className="w-3 h-3 rounded-full" style={{ background: s.color }} />
-                  <span className="text-card-foreground">{s.name}</span>
+              <li key={s.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 rounded-xl transition-colors">
+                <span className="flex items-center gap-3">
+                  <span className="w-3.5 h-3.5 rounded-full ring-2 ring-white shadow-sm" style={{ background: s.color }} />
+                  <span className="text-sm font-medium text-card-foreground">{s.name}</span>
                 </span>
-                <button type="button" onClick={() => removeService(s.id)} className="text-destructive text-sm font-medium hover:underline">
-                  Remove
+                <button type="button" onClick={() => removeService(s.id)}
+                  className="text-destructive/70 hover:text-destructive text-xs font-medium transition-colors flex items-center gap-1">
+                  <TrashIcon /> Remove
                 </button>
               </li>
             ))}
+            {services.length === 0 && (
+              <li className="px-4 py-6 text-center text-sm text-muted-foreground">No services yet</li>
+            )}
           </ul>
         </div>
 
         {/* Staff */}
         <div className="bg-card rounded-2xl shadow-card border border-border overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-            <h3 className="font-semibold text-card-foreground">Staff</h3>
-            <button type="button" onClick={addStaff} className="btn-primary text-sm px-3 py-1.5">Register Staff</button>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-info/10 flex items-center justify-center text-info"><StethIcon /></div>
+              <h3 className="font-semibold text-card-foreground">Staff</h3>
+            </div>
+            <button type="button" onClick={addStaff} className="btn-primary text-sm px-3 py-1.5 flex items-center gap-1.5">
+              <PlusIcon /> Register
+            </button>
           </div>
-          <ul className="divide-y divide-border p-2 max-h-64 overflow-y-auto">
+          <ul className="divide-y divide-border p-1.5 max-h-72 overflow-y-auto">
             {staff.map((s) => (
-              <li key={s.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-muted rounded-xl transition-colors">
-                <span className="text-card-foreground">
-                  {s.name} <span className="text-muted-foreground">({s.role})</span>{' '}
-                  {s.serviceName ? <span className="text-muted-foreground">· {s.serviceName}</span> : ''}
-                </span>
+              <li key={s.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 rounded-xl transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
+                    {s.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-card-foreground truncate">{s.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="capitalize">{s.role}</span>
+                      {s.serviceName && <span> · {s.serviceName}</span>}
+                    </p>
+                  </div>
+                </div>
                 {s.role !== 'admin' && (
-                  <span className="flex gap-3">
-                    <button type="button" onClick={() => editStaff(s)} className="text-primary text-sm font-medium hover:underline">Edit</button>
-                    <button type="button" onClick={() => removeStaff(s.id)} className="text-destructive text-sm font-medium hover:underline">Remove</button>
+                  <span className="flex gap-2 shrink-0 ml-2">
+                    <button type="button" onClick={() => editStaff(s)}
+                      className="text-primary/70 hover:text-primary text-xs font-medium transition-colors flex items-center gap-1">
+                      <PenIcon /> Edit
+                    </button>
+                    <button type="button" onClick={() => removeStaff(s.id)}
+                      className="text-destructive/70 hover:text-destructive text-xs font-medium transition-colors flex items-center gap-1">
+                      <TrashIcon />
+                    </button>
                   </span>
                 )}
               </li>
             ))}
+            {staff.length === 0 && (
+              <li className="px-4 py-6 text-center text-sm text-muted-foreground">No staff registered yet</li>
+            )}
           </ul>
         </div>
       </div>
@@ -168,17 +249,20 @@ export default function AdminDashboard() {
                 <label className="label-field">Name</label>
                 <input type="text" value={modal.name}
                   onChange={(e) => setModal((m: any) => ({ ...m, name: e.target.value }))}
-                  className="input-field" placeholder="e.g. Neurologie" />
+                  className="input-field" placeholder="e.g. Neurologie" autoFocus />
               </div>
               <div>
                 <label className="label-field">Color</label>
-                <input type="color" value={modal.color}
-                  onChange={(e) => setModal((m: any) => ({ ...m, color: e.target.value }))}
-                  className="h-12 w-full rounded-xl border border-input cursor-pointer" />
+                <div className="flex items-center gap-3">
+                  <input type="color" value={modal.color}
+                    onChange={(e) => setModal((m: any) => ({ ...m, color: e.target.value }))}
+                    className="h-10 w-14 rounded-lg border border-input cursor-pointer" />
+                  <span className="text-sm text-muted-foreground font-mono">{modal.color}</span>
+                </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setModal(null)} className="btn-secondary">Cancel</button>
-                <button type="button" onClick={saveService} className="btn-primary">Save</button>
+                <button type="button" onClick={saveService} className="btn-primary">Save Service</button>
               </div>
             </div>
           </div>
@@ -195,7 +279,7 @@ export default function AdminDashboard() {
                 <label className="label-field">Full Name</label>
                 <input type="text" value={modal.name}
                   onChange={(e) => setModal((m: any) => ({ ...m, name: e.target.value }))}
-                  className="input-field" />
+                  className="input-field" autoFocus />
               </div>
               <div>
                 <label className="label-field">Username</label>
@@ -204,36 +288,38 @@ export default function AdminDashboard() {
                   className="input-field" />
               </div>
               <div>
-                <label className="label-field">Password {modal.id && '(leave blank to keep current)'}</label>
+                <label className="label-field">Password {modal.id && <span className="text-muted-foreground font-normal">(leave blank to keep current)</span>}</label>
                 <input type="password" value={modal.password}
                   onChange={(e) => setModal((m: any) => ({ ...m, password: e.target.value }))}
                   className="input-field" placeholder={modal.id ? '••••••••' : ''} />
               </div>
-              <div>
-                <label className="label-field">Role</label>
-                <select value={modal.role}
-                  onChange={(e) => setModal((m: any) => ({ ...m, role: e.target.value }))}
-                  className="select-field">
-                  <option value="nurse">Nurse</option>
-                  <option value="doctor">Doctor</option>
-                  {modal.id && modal.role === 'admin' && <option value="admin">Admin</option>}
-                </select>
-              </div>
-              <div>
-                <label className="label-field">Service</label>
-                <select value={modal.serviceId}
-                  onChange={(e) => setModal((m: any) => ({ ...m, serviceId: e.target.value }))}
-                  className="select-field">
-                  <option value="">—</option>
-                  {services.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label-field">Role</label>
+                  <select value={modal.role}
+                    onChange={(e) => setModal((m: any) => ({ ...m, role: e.target.value }))}
+                    className="select-field">
+                    <option value="nurse">Nurse</option>
+                    <option value="doctor">Doctor</option>
+                    {modal.id && modal.role === 'admin' && <option value="admin">Admin</option>}
+                  </select>
+                </div>
+                <div>
+                  <label className="label-field">Service</label>
+                  <select value={modal.serviceId}
+                    onChange={(e) => setModal((m: any) => ({ ...m, serviceId: e.target.value }))}
+                    className="select-field">
+                    <option value="">—</option>
+                    {services.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setModal(null)} className="btn-secondary">Cancel</button>
                 <button type="button" onClick={saveStaff} className="btn-primary">
-                  {modal.id ? 'Save' : 'Register'}
+                  {modal.id ? 'Save Changes' : 'Register'}
                 </button>
               </div>
             </div>

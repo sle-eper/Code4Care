@@ -13,11 +13,11 @@ export default function Modal({ children, onClose }: ModalProps) {
       role="dialog"
       aria-modal="true"
     >
-      {/* Backdrop with blur */}
-      <div className="absolute inset-0 bg-foreground/30 backdrop-blur-sm" />
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-foreground/40 backdrop-blur-md" />
       {/* Modal content */}
       <div
-        className="relative bg-card rounded-2xl shadow-modal max-h-[90vh] overflow-hidden w-full max-w-2xl overflow-y-auto animate-slide-up"
+        className="relative bg-card rounded-2xl shadow-modal max-h-[90vh] overflow-hidden w-full max-w-2xl overflow-y-auto animate-slide-up ring-1 ring-border"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
