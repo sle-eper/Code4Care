@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initSchema, seed } from './init.js';
+import { initSchema, migrateSchema, seed } from './init.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.join(__dirname, '..', 'data', 'code4care.db');
@@ -12,6 +12,7 @@ export function getDb() {
   if (!db) {
     db = new Database(dbPath);
     initSchema(db);
+    migrateSchema(db);
     seed(db);
   }
   return db;
@@ -43,7 +44,14 @@ export function rowToPatient(row) {
     visitation: row.visitation,
     additionalNotes: row.additional_notes,
     aiSummary: row.ai_summary,
-    visitHistory
+    visitHistory,
+    doctorGenderPref: row.doctor_gender_pref,
+    preferredLanguage: row.preferred_language,
+    painTolerance: row.pain_tolerance,
+    fearOfNeedles: row.fear_of_needles,
+    knownAllergies: row.known_allergies,
+    physicalContactOk: row.physical_contact_ok,
+    emotionalSupport: row.emotional_support,
   };
 }
 
@@ -70,6 +78,13 @@ export function patientToRow(p) {
     visitation: p.visitation || null,
     additional_notes: p.additionalNotes || null,
     ai_summary: p.aiSummary || null,
-    visit_history: p.visitHistory ? JSON.stringify(p.visitHistory) : null
+    visit_history: p.visitHistory ? JSON.stringify(p.visitHistory) : null,
+    doctor_gender_pref: p.doctorGenderPref || null,
+    preferred_language: p.preferredLanguage || null,
+    pain_tolerance: p.painTolerance || null,
+    fear_of_needles: p.fearOfNeedles || null,
+    known_allergies: p.knownAllergies || null,
+    physical_contact_ok: p.physicalContactOk || null,
+    emotional_support: p.emotionalSupport || null,
   };
 }

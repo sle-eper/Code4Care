@@ -48,7 +48,14 @@ export function initSchema(db) {
       visitation TEXT,
       additional_notes TEXT,
       ai_summary TEXT,
-      visit_history TEXT
+      visit_history TEXT,
+      doctor_gender_pref TEXT,
+      preferred_language TEXT,
+      pain_tolerance TEXT,
+      fear_of_needles TEXT,
+      known_allergies TEXT,
+      physical_contact_ok TEXT,
+      emotional_support TEXT
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_patients_medical_id ON patients(medical_id) WHERE medical_id IS NOT NULL AND medical_id != '';
 
@@ -69,6 +76,22 @@ export function initSchema(db) {
       text TEXT NOT NULL
     );
   `);
+}
+
+// Add new columns to existing DB (safe — ignores if already present)
+export function migrateSchema(db) {
+  const newCols = [
+    'doctor_gender_pref TEXT',
+    'preferred_language TEXT',
+    'pain_tolerance TEXT',
+    'fear_of_needles TEXT',
+    'known_allergies TEXT',
+    'physical_contact_ok TEXT',
+    'emotional_support TEXT',
+  ];
+  for (const col of newCols) {
+    try { db.exec(`ALTER TABLE patients ADD COLUMN ${col}`); } catch (_) { /* already exists */ }
+  }
 }
 
 export function seed(db) {

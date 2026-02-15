@@ -5,6 +5,8 @@ const emptyPatient = {
   status: 'Active', serviceId: '', tempPreference: 'Moderate', noisePreference: 'Moderate',
   dietary: '', sleepSchedule: '', communicationStyle: 'Simple', beliefs: '',
   hobbies: '', dislikes: '', visitation: '', additionalNotes: '',
+  doctorGenderPref: 'No preference', preferredLanguage: '', painTolerance: 'Moderate',
+  fearOfNeedles: 'No', knownAllergies: '', physicalContactOk: '', emotionalSupport: 'Sometimes',
 };
 
 interface PatientFormProps {
@@ -23,6 +25,17 @@ interface PatientFormProps {
 const UserIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+  </svg>
+);
+const HeartHandIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+  </svg>
+);
+const ShieldAlertIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    <path d="M12 8v4" /><path d="M12 16h.01" />
   </svg>
 );
 const SettingsIcon = () => (
@@ -48,6 +61,13 @@ export default function PatientForm({
         communicationStyle: patient.communicationStyle || 'Simple', beliefs: patient.beliefs || '',
         hobbies: patient.hobbies || '', dislikes: patient.dislikes || '', visitation: patient.visitation || '',
         additionalNotes: patient.additionalNotes || '',
+        doctorGenderPref: patient.doctorGenderPref || 'No preference',
+        preferredLanguage: patient.preferredLanguage || '',
+        painTolerance: patient.painTolerance || 'Moderate',
+        fearOfNeedles: patient.fearOfNeedles || 'No',
+        knownAllergies: patient.knownAllergies || '',
+        physicalContactOk: patient.physicalContactOk || '',
+        emotionalSupport: patient.emotionalSupport || 'Sometimes',
       });
     } else {
       setForm((f) => ({
@@ -70,6 +90,13 @@ export default function PatientForm({
       communicationStyle: isBasic ? null : form.communicationStyle, beliefs: isBasic ? null : (form.beliefs.trim() || null),
       hobbies: isBasic ? null : (form.hobbies.trim() || null), dislikes: isBasic ? null : (form.dislikes.trim() || null),
       visitation: isBasic ? null : (form.visitation.trim() || null), additionalNotes: isBasic ? null : (form.additionalNotes.trim() || null),
+      doctorGenderPref: isBasic ? null : form.doctorGenderPref,
+      preferredLanguage: isBasic ? null : (form.preferredLanguage.trim() || null),
+      painTolerance: isBasic ? null : form.painTolerance,
+      fearOfNeedles: isBasic ? null : form.fearOfNeedles,
+      knownAllergies: isBasic ? null : (form.knownAllergies.trim() || null),
+      physicalContactOk: isBasic ? null : (form.physicalContactOk.trim() || null),
+      emotionalSupport: isBasic ? null : form.emotionalSupport,
     };
     onSave(payload, { basicOnly: isBasic });
   };
@@ -231,6 +258,87 @@ export default function PatientForm({
                 <textarea rows={2} value={form.additionalNotes}
                   onChange={(e) => setForm((f) => ({ ...f, additionalNotes: e.target.value }))}
                   className="input-field" placeholder="Anything else staff should know..." />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Care Preferences ── */}
+        {!showBasicOnly && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-md bg-info/10 flex items-center justify-center text-info"><HeartHandIcon /></div>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Care Preferences</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label-field">Nurse gender preference</label>
+                <select value={form.doctorGenderPref}
+                  onChange={(e) => setForm((f) => ({ ...f, doctorGenderPref: e.target.value }))}
+                  className="select-field">
+                  <option value="No preference">No preference</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+              <div>
+                <label className="label-field">Preferred language</label>
+                <input type="text" value={form.preferredLanguage}
+                  onChange={(e) => setForm((f) => ({ ...f, preferredLanguage: e.target.value }))}
+                  className="input-field" placeholder="e.g. French, Arabic..." />
+              </div>
+              <div>
+                <label className="label-field">Pain tolerance</label>
+                <select value={form.painTolerance}
+                  onChange={(e) => setForm((f) => ({ ...f, painTolerance: e.target.value }))}
+                  className="select-field">
+                  <option value="Low">Low</option>
+                  <option value="Moderate">Moderate</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+              <div>
+                <label className="label-field">Emotional support needed</label>
+                <select value={form.emotionalSupport}
+                  onChange={(e) => setForm((f) => ({ ...f, emotionalSupport: e.target.value }))}
+                  className="select-field">
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                  <option value="Sometimes">Sometimes</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="label-field">Acceptable physical contact</label>
+                <input type="text" value={form.physicalContactOk}
+                  onChange={(e) => setForm((f) => ({ ...f, physicalContactOk: e.target.value }))}
+                  className="input-field" placeholder="e.g. Handshake OK, avoid shoulder touch..." />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Health & Safety ── */}
+        {!showBasicOnly && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-md bg-destructive/10 flex items-center justify-center text-destructive"><ShieldAlertIcon /></div>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Health & Safety</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label-field">Fear of needles</label>
+                <select value={form.fearOfNeedles}
+                  onChange={(e) => setForm((f) => ({ ...f, fearOfNeedles: e.target.value }))}
+                  className="select-field">
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="label-field">Known allergies (non-dietary)</label>
+                <textarea rows={2} value={form.knownAllergies}
+                  onChange={(e) => setForm((f) => ({ ...f, knownAllergies: e.target.value }))}
+                  className="input-field" placeholder="e.g. Latex, Penicillin, Ibuprofen..." />
               </div>
             </div>
           </div>

@@ -117,8 +117,9 @@ patientsRoutes.post('/', (req, res) => {
     const visitHistory = [{ admittedAt: now, roomNumber: body.roomNumber, serviceId: body.serviceId }];
     const ins = db.prepare(`
       INSERT INTO patients (full_name, age, gender, medical_id, room_number, status, service_id, created_at, created_by,
-        temp_preference, noise_preference, dietary, sleep_schedule, communication_style, beliefs, hobbies, dislikes, visitation, additional_notes, ai_summary, visit_history)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        temp_preference, noise_preference, dietary, sleep_schedule, communication_style, beliefs, hobbies, dislikes, visitation, additional_notes, ai_summary, visit_history,
+        doctor_gender_pref, preferred_language, pain_tolerance, fear_of_needles, known_allergies, physical_contact_ok, emotional_support)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const result = ins.run(
       body.fullName,
@@ -141,7 +142,14 @@ patientsRoutes.post('/', (req, res) => {
       body.visitation || null,
       body.additionalNotes || null,
       body.aiSummary || null,
-      JSON.stringify(visitHistory)
+      JSON.stringify(visitHistory),
+      body.doctorGenderPref || null,
+      body.preferredLanguage || null,
+      body.painTolerance || null,
+      body.fearOfNeedles || null,
+      body.knownAllergies || null,
+      body.physicalContactOk || null,
+      body.emotionalSupport || null
     );
     const lastId = result.lastInsertRowid;
     addAudit(db, lastId, createdBy, 'Profile created', '');
@@ -236,6 +244,13 @@ patientsRoutes.put('/:id', (req, res) => {
       visitation: 'visitation',
       additionalNotes: 'additional_notes',
       aiSummary: 'ai_summary',
+      doctorGenderPref: 'doctor_gender_pref',
+      preferredLanguage: 'preferred_language',
+      painTolerance: 'pain_tolerance',
+      fearOfNeedles: 'fear_of_needles',
+      knownAllergies: 'known_allergies',
+      physicalContactOk: 'physical_contact_ok',
+      emotionalSupport: 'emotional_support',
     };
     for (const [k, col] of Object.entries(map)) {
       if (body[k] !== undefined) {
